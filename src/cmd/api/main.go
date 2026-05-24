@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	r := router.New()
+	r := router.New(conn)
 
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
