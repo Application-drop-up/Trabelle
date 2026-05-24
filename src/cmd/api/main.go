@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Application-drop-up/Travellle/internal/db"
-	"github.com/go-chi/chi/v5"
+	"github.com/Application-drop-up/Travellle/internal/router"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	r := chi.NewRouter()
+	r := router.New()
 
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
