@@ -41,5 +41,14 @@ services:
     depends_on:
       - api
 
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8090:8080"
+    volumes:
+      - ../src/swagger:/swagger
+    environment:
+      SWAGGER_JSON: /swagger/openapi.yaml
+
 volumes:
   postgres_data:
