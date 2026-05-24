@@ -16,6 +16,70 @@ tags:
   - name: spots
     description: Spot search operations
 paths:
+  /plans:
+    post:
+      tags:
+        - plans
+      summary: Create a new travel plan
+      operationId: createPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlanRequest'
+      responses:
+        '201':
+          description: Plan created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /plans/{share_token}:
+    get:
+      tags:
+        - plans
+      summary: Fetch a plan by sharing URL token
+      operationId: getPlanByShareToken
+      parameters:
+        - name: share_token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique token used in the sharing URL
+          example: "abc123xyz"
+      responses:
+        '200':
+          description: Plan found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '404':
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /spots/search:
     get:
       tags:
@@ -59,6 +123,41 @@ components:
         message:
           type: string
           example: "an error occurred"
+    Plan:
+      type: object
+      required:
+        - id
+        - share_token
+        - title
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        share_token:
+          type: string
+          example: "abc123xyz"
+        title:
+          type: string
+          example: "Tokyo Trip 2025"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+    CreatePlanRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: "Tokyo Trip 2025"
     Spot:
       type: object
       required:
