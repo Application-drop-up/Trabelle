@@ -125,3 +125,102 @@ components:
         title:
           type: string
           example: "Tokyo Trip 2025"
+    Pin:
+      type: object
+      required:
+        - id
+        - plan_id
+        - name
+        - latitude
+        - longitude
+        - category
+        - colour
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        plan_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Tokyo Tower"
+        latitude:
+          type: number
+          format: double
+          example: 35.6586
+        longitude:
+          type: number
+          format: double
+          example: 139.7454
+        category:
+          type: string
+          enum:
+            - restaurant
+            - hotel
+            - sightseeing
+            - transport
+            - other
+          example: "sightseeing"
+        colour:
+          type: string
+          example: "#FF5733"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+    CreatePinRequest:
+      type: object
+      required:
+        - name
+        - latitude
+        - longitude
+        - category
+        - colour
+      properties:
+        name:
+          type: string
+          example: "Tokyo Tower"
+        latitude:
+          type: number
+          format: double
+          example: 35.6586
+        longitude:
+          type: number
+          format: double
+          example: 139.7454
+        category:
+          type: string
+          enum:
+            - restaurant
+            - hotel
+            - sightseeing
+            - transport
+            - other
+          example: "sightseeing"
+        colour:
+          type: string
+          example: "#FF5733"
+    UpdatePinRequest:
+      type: object
+      properties:
+        category:
+          type: string
+          enum:
+            - restaurant
+            - hotel
+            - sightseeing
+            - transport
+            - other
+          example: "restaurant"
+        colour:
+          type: string
+          example: "#3498DB"
