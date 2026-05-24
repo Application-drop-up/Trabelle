@@ -15,7 +15,53 @@ tags:
     description: Note operations on pins
   - name: spots
     description: Spot search operations
-paths: {}
+paths:
+  /pins/{pin_id}/notes:
+    post:
+      tags:
+        - notes
+      summary: Add a note to a pin
+      operationId: createNote
+      parameters:
+        - name: pin_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target pin ID
+          example: "660e8400-e29b-41d4-a716-446655440001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNoteRequest'
+      responses:
+        '201':
+          description: Note added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Pin not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Error:
