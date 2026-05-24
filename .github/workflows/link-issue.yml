@@ -1,0 +1,80 @@
+name: Link Issues to PR
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+permissions:
+  pull-requests: write
+  issues: read
+
+jobs:
+  link:
+    name: Link related issues
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr   = context.payload.pull_request;
+            const body = pr.body ?? '';
+
+            // Extract issue numbers from branch name (e.g. feat/27-add-ci or feat/ci-27)
+            const nums = new Set();
+            for (const m of pr.head.ref.matchAll(/[#/\-](\d+)/g)) {
+              nums.add(parseInt(m[1]));
+            }
+            // Also scan the existing PR body for bare #N references
+            for (const m of body.matchAll(/#(\d+)/g)) {
+              nums.add(parseInt(m[1]));
+            }
+
+            if (nums.size === 0) return;
+
+            const lines = [];
+
+            for (const num of nums) {
+              try {
+                // Confirm the issue exists
+                await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo:  context.repo.repo,
+                  issue_number: num,
+                });
+
+                // Fetch sub-issues (GitHub sub-issues API)
+                let subIssues = [];
+                try {
+                  const res = await github.request(
+                    'GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues',
+                    {
+                      owner:        context.repo.owner,
+                      repo:         context.repo.repo,
+                      issue_number: num,
+                    }
+                  );
+                  subIssues = res.data ?? [];
+                } catch (_) { /* feature not available — skip silently */ }
+
+                if (!body.includes(`#${num}`)) lines.push(`Closes #${num}`);
+
+                for (const sub of subIssues) {
+                  if (!body.includes(`#${sub.number}`)) {
+                    lines.push(`Closes #${sub.number}`);
+                  }
+                }
+              } catch (_) { /* issue not found — skip */ }
+            }
+
+            if (lines.length === 0) return;
+
+            const newBody = body
+              ? `${body}\n\n---\n_Auto-linked by CI:_\n${lines.join('\n')}`
+              : lines.join('\n');
+
+            await github.rest.pulls.update({
+              owner:       context.repo.owner,
+              repo:        context.repo.repo,
+              pull_number: pr.number,
+              body:        newBody,
+            });
