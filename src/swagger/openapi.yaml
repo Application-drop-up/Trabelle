@@ -26,3 +26,47 @@ components:
         message:
           type: string
           example: "an error occurred"
+    Note:
+      type: object
+      required:
+        - id
+        - pin_id
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        pin_id:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        content:
+          type: string
+          example: "Great view from the top!"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+    CreateNoteRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          example: "Great view from the top!"
+    UpdateNoteRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          example: "Updated note content"
