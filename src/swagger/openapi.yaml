@@ -47,6 +47,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /plans/{share_token}:
+    get:
+      tags:
+        - plans
+      summary: Fetch a plan by sharing URL token
+      operationId: getPlanByShareToken
+      parameters:
+        - name: share_token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique token used in the sharing URL
+          example: "abc123xyz"
+      responses:
+        '200':
+          description: Plan found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '404':
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Error:
