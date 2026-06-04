@@ -543,6 +543,17 @@ components:
           type: string
           format: date-time
           example: "2025-01-01T00:00:00Z"
+    PinWithNotes:
+      allOf:
+        - $ref: '#/components/schemas/Pin'
+        - type: object
+          required:
+            - notes
+          properties:
+            notes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Note'
     CreatePinRequest:
       type: object
       required:
