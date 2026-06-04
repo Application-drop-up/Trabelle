@@ -433,7 +433,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpotSearchResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Spot'
         '400':
           description: Missing or invalid query parameter
           content:
@@ -677,12 +679,3 @@ components:
           type: number
           format: double
           example: 139.7454
-    SpotSearchResponse:
-      type: object
-      required:
-        - spots
-      properties:
-        spots:
-          type: array
-          items:
-            $ref: '#/components/schemas/Spot'
