@@ -217,13 +217,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /pins/{pin_id}/notes:
+  /plans/{plan_id}/pins/{pin_id}/notes:
     post:
       tags:
         - notes
       summary: Add a note to a pin
       operationId: createNote
       parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target plan ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
         - name: pin_id
           in: path
           required: true
@@ -263,13 +271,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /pins/{pin_id}/notes/{note_id}:
+  /plans/{plan_id}/pins/{pin_id}/notes/{note_id}:
     patch:
       tags:
         - notes
       summary: Update a note
       operationId: updateNote
       parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target plan ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
         - name: pin_id
           in: path
           required: true
@@ -323,6 +339,14 @@ paths:
       summary: Delete a note from a pin
       operationId: deleteNote
       parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target plan ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
         - name: pin_id
           in: path
           required: true
