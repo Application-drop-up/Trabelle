@@ -81,6 +81,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   /plans/{plan_id}/pins:
+    get:
+      tags:
+        - pins
+      summary: List all pins for a plan
+      operationId: listPins
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target plan ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Pins retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pin'
+        '400':
+          description: Invalid plan_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
       tags:
         - pins
