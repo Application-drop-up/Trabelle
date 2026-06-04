@@ -462,6 +462,7 @@ components:
         - id
         - share_token
         - title
+        - pins
         - created_at
         - updated_at
       properties:
@@ -475,6 +476,10 @@ components:
         title:
           type: string
           example: "Tokyo Trip 2025"
+        pins:
+          type: array
+          items:
+            $ref: '#/components/schemas/PinWithNotes'
         created_at:
           type: string
           format: date-time
