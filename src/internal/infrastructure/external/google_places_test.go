@@ -33,7 +33,7 @@ func TestGooglePlacesClient_Search(t *testing.T) {
 				t.Error("X-Goog-FieldMask header is missing")
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]any{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"places": []map[string]any{
 					{
 						"id":               "ChIJ5eTFBkqLGGARsV4PF3rDVAA",
@@ -76,7 +76,7 @@ func TestGooglePlacesClient_Search(t *testing.T) {
 
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]any{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"places": []map[string]any{
 					{
 						"id":               "valid-id",
