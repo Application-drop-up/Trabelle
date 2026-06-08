@@ -1,8 +1,8 @@
 FROM golang:1.26-alpine AS builder
 WORKDIR /app
-COPY src/go.mod src/go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
-COPY src/ .
+COPY backend/ .
 RUN go build -o api ./cmd/api
 
 FROM alpine:3.20
