@@ -27,8 +27,8 @@
 'database':
   - head-branch: ['.*db.*']
   - changed-files:
-    - any-glob-to-any-file: ['src/migrations/**']
+    - any-glob-to-any-file: ['backend/migrations/**']
 
 'go':
   - changed-files:
-    - any-glob-to-any-file: ['src/**/*.go']
+    - any-glob-to-any-file: ['backend/**/*.go']
