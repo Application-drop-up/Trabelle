@@ -46,7 +46,7 @@ services:
     ports:
       - "8090:8080"
     volumes:
-      - ../src/swagger:/swagger
+      - ../backend/swagger:/swagger
     environment:
       SWAGGER_JSON: /swagger/openapi.yaml
 

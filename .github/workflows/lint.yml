@@ -15,12 +15,12 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: src/go.mod
-          cache-dependency-path: src/go.sum
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           install-mode: goinstall
-          working-directory: src
+          working-directory: backend
