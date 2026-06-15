@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:ox": "oxlint src/"
+    "lint:ox": "oxlint --config .oxlintrc.json src/"
   },
   "dependencies": {
     "next": "16.2.9",
