@@ -1,0 +1,17 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: frontend-lint
+      root: frontend/
+      glob: "*.{js,ts,jsx,tsx}"
+      run: npm run lint:ox
+
+    - name: frontend-format
+      root: frontend/
+      glob: "*.{js,ts,jsx,tsx,css}"
+      run: npm run format:check
+
+    - name: backend-lint
+      root: backend/
+      glob: "*.go"
+      run: golangci-lint run ./...
