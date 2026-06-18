@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "lefthook": "^2.1.9",
+    "oxfmt": "^0.55.0"
+  }
+}
