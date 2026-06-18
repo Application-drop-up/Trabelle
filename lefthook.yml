@@ -15,3 +15,8 @@ pre-commit:
       root: backend/
       glob: "*.go"
       run: golangci-lint run ./...
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: npx commitlint --edit {1}
