@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:ox": "oxlint --config .oxlintrc.json src/"
+    "lint:ox": "oxlint --config .oxlintrc.json src/",
+    "format": "oxfmt --write src/",
+    "format:check": "oxfmt --check src/"
   },
   "dependencies": {
     "next": "16.2.9",
@@ -21,6 +23,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "oxfmt": "^0.55.0",
     "oxlint": "^1.69.0",
     "tailwindcss": "^4",
     "typescript": "^5"
