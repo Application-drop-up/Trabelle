@@ -33,6 +33,21 @@ services:
       db:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/docker/frontend/Dockerfile.dev
+    environment:
+      WATCHPACK_POLLING: "true"
+      NEXT_PUBLIC_API_URL: http://api:8080
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
   nginx:
     build:
       context: docker/nginx
