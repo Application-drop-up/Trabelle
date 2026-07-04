@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { MSWProvider } from "@/components/MSWProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="h-full flex flex-col overflow-hidden">
+        {process.env.NODE_ENV === "development" ? <MSWProvider>{children}</MSWProvider> : children}
+      </body>
     </html>
   );
 }
