@@ -10,5 +10,6 @@ export interface MapAdapter {
   initialize(container: HTMLElement, center: LatLng, zoom: number): Promise<void>;
   addMarker(marker: MapMarker): void;
   removeMarker(id: string): void;
+  fitToMarkers(markers: MapMarker[]): void;
   destroy(): void;
 }
