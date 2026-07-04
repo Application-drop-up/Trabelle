@@ -5,3 +5,11 @@ export interface Note {
   created_at: string;
   updated_at: string;
 }
+
+export interface CreateNoteInput {
+  content: string;
+}
+
+export interface UpdateNoteInput {
+  content: string;
+}
