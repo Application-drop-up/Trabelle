@@ -1,7 +1,12 @@
 import type { LatLng, MapAdapter, MapMarker } from "./adapter";
 
 type TtMarkerLike = { remove(): void };
-type TtMapLike = { remove(): void };
+type TtMapLike = {
+  remove(): void;
+  setCenter(center: { lng: number; lat: number }): void;
+  setZoom(zoom: number): void;
+  fitBounds(bounds: [[number, number], [number, number]], options?: { padding?: number }): void;
+};
 
 type TtRuntime = {
   map(options: {
@@ -46,6 +51,25 @@ export class TomTomMapAdapter implements MapAdapter {
     if (!m) return;
     m.remove();
     this.markerMap.delete(id);
+  }
+
+  fitToMarkers(markers: MapMarker[]): void {
+    if (!this.map || markers.length === 0) return;
+    if (markers.length === 1) {
+      const { lat, lng } = markers[0].position;
+      this.map.setCenter({ lng, lat });
+      this.map.setZoom(14);
+      return;
+    }
+    const lats = markers.map((m) => m.position.lat);
+    const lngs = markers.map((m) => m.position.lng);
+    this.map.fitBounds(
+      [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ],
+      { padding: 60 },
+    );
   }
 
   destroy(): void {
