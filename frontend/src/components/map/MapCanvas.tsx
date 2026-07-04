@@ -43,6 +43,7 @@ export default function MapCanvas({ adapter, center, zoom, markers }: Props) {
       if (!prevMarkerIds.current.has(marker.id)) adapter.addMarker(marker);
     }
     prevMarkerIds.current = currentIds;
+    adapter.fitToMarkers(markers);
   }, [ready, markers, adapter]);
 
   return <div ref={containerRef} className="h-full w-full" />;
