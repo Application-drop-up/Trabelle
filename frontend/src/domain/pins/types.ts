@@ -17,3 +17,16 @@ export interface Pin {
 export interface PinWithNotes extends Pin {
   notes: Note[];
 }
+
+export interface CreatePinInput {
+  name: string;
+  latitude: number;
+  longitude: number;
+  category: PinCategory;
+  colour: string;
+}
+
+export interface UpdatePinInput {
+  category?: PinCategory;
+  colour?: string;
+}
