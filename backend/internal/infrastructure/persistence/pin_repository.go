@@ -22,14 +22,14 @@ func NewPinRepository(db *sql.DB) *PinRepository {
 	return &PinRepository{db: db}
 }
 
-func (r *PinRepository) Create(ctx context.Context, p *domain.Pin) error {
+func (repo *PinRepository) Create(ctx context.Context, pin *domain.Pin) error {
 	query := `
 		INSERT INTO pins (id, plan_id, name, latitude, longitude, category, colour)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING created_at, updated_at`
-	err := r.db.QueryRowContext(ctx, query,
-		p.ID, p.PlanID, p.Name, p.Latitude, p.Longitude, string(p.Category), p.Colour).
-		Scan(&p.CreatedAt, &p.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, query,
+		pin.ID, pin.PlanID, pin.Name, pin.Latitude, pin.Longitude, string(pin.Category), pin.Colour).
+		Scan(&pin.CreatedAt, &pin.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == pgFKViolation {
@@ -40,31 +40,31 @@ func (r *PinRepository) Create(ctx context.Context, p *domain.Pin) error {
 	return nil
 }
 
-func (r *PinRepository) FindByID(ctx context.Context, planID, pinID uuid.UUID) (*domain.Pin, error) {
+func (repo *PinRepository) FindByID(ctx context.Context, planID, pinID uuid.UUID) (*domain.Pin, error) {
 	query := `
 		SELECT id, plan_id, name, latitude, longitude, category, colour, created_at, updated_at
 		FROM pins WHERE id = $1 AND plan_id = $2`
-	p := &domain.Pin{}
+	pin := &domain.Pin{}
 	var category string
-	err := r.db.QueryRowContext(ctx, query, pinID, planID).
-		Scan(&p.ID, &p.PlanID, &p.Name, &p.Latitude, &p.Longitude, &category, &p.Colour, &p.CreatedAt, &p.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, query, pinID, planID).
+		Scan(&pin.ID, &pin.PlanID, &pin.Name, &pin.Latitude, &pin.Longitude, &category, &pin.Colour, &pin.CreatedAt, &pin.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("find pin by id: %w", err)
 	}
-	p.Category = domain.Category(category)
-	return p, nil
+	pin.Category = domain.Category(category)
+	return pin, nil
 }
 
-func (r *PinRepository) Update(ctx context.Context, p *domain.Pin) error {
+func (repo *PinRepository) Update(ctx context.Context, pin *domain.Pin) error {
 	query := `
 		UPDATE pins SET category = $1, colour = $2, updated_at = NOW()
 		WHERE id = $3 AND plan_id = $4
 		RETURNING updated_at`
-	err := r.db.QueryRowContext(ctx, query, string(p.Category), p.Colour, p.ID, p.PlanID).
-		Scan(&p.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, query, string(pin.Category), pin.Colour, pin.ID, pin.PlanID).
+		Scan(&pin.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrNotFound
 	}
@@ -74,11 +74,11 @@ func (r *PinRepository) Update(ctx context.Context, p *domain.Pin) error {
 	return nil
 }
 
-func (r *PinRepository) FindByPlanID(ctx context.Context, planID uuid.UUID) ([]*domain.Pin, error) {
+func (repo *PinRepository) FindByPlanID(ctx context.Context, planID uuid.UUID) ([]*domain.Pin, error) {
 	query := `
 		SELECT id, plan_id, name, latitude, longitude, category, colour, created_at, updated_at
 		FROM pins WHERE plan_id = $1 ORDER BY created_at ASC`
-	rows, err := r.db.QueryContext(ctx, query, planID)
+	rows, err := repo.db.QueryContext(ctx, query, planID)
 	if err != nil {
 		return nil, fmt.Errorf("find pins by plan id: %w", err)
 	}
@@ -86,13 +86,13 @@ func (r *PinRepository) FindByPlanID(ctx context.Context, planID uuid.UUID) ([]*
 
 	var pins []*domain.Pin
 	for rows.Next() {
-		p := &domain.Pin{}
+		pin := &domain.Pin{}
 		var category string
-		if err := rows.Scan(&p.ID, &p.PlanID, &p.Name, &p.Latitude, &p.Longitude, &category, &p.Colour, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&pin.ID, &pin.PlanID, &pin.Name, &pin.Latitude, &pin.Longitude, &category, &pin.Colour, &pin.CreatedAt, &pin.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan pin: %w", err)
 		}
-		p.Category = domain.Category(category)
-		pins = append(pins, p)
+		pin.Category = domain.Category(category)
+		pins = append(pins, pin)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("find pins by plan id rows: %w", err)
@@ -100,17 +100,17 @@ func (r *PinRepository) FindByPlanID(ctx context.Context, planID uuid.UUID) ([]*
 	return pins, nil
 }
 
-func (r *PinRepository) Delete(ctx context.Context, planID, pinID uuid.UUID) error {
+func (repo *PinRepository) Delete(ctx context.Context, planID, pinID uuid.UUID) error {
 	query := `DELETE FROM pins WHERE id = $1 AND plan_id = $2`
-	result, err := r.db.ExecContext(ctx, query, pinID, planID)
+	result, err := repo.db.ExecContext(ctx, query, pinID, planID)
 	if err != nil {
 		return fmt.Errorf("delete pin: %w", err)
 	}
-	n, err := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("delete pin rows affected: %w", err)
 	}
-	if n == 0 {
+	if rowsAffected == 0 {
 		return domain.ErrNotFound
 	}
 	return nil
