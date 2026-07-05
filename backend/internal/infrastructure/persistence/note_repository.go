@@ -20,13 +20,13 @@ func NewNoteRepository(db *sql.DB) *NoteRepository {
 	return &NoteRepository{db: db}
 }
 
-func (r *NoteRepository) Create(ctx context.Context, n *domain.Note) error {
+func (repo *NoteRepository) Create(ctx context.Context, note *domain.Note) error {
 	query := `
 		INSERT INTO notes (id, pin_id, content)
 		VALUES ($1, $2, $3)
 		RETURNING created_at, updated_at`
-	err := r.db.QueryRowContext(ctx, query, n.ID, n.PinID, n.Content).
-		Scan(&n.CreatedAt, &n.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, query, note.ID, note.PinID, note.Content).
+		Scan(&note.CreatedAt, &note.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == pgFKViolation {
@@ -37,27 +37,27 @@ func (r *NoteRepository) Create(ctx context.Context, n *domain.Note) error {
 	return nil
 }
 
-func (r *NoteRepository) FindByID(ctx context.Context, pinID, noteID uuid.UUID) (*domain.Note, error) {
+func (repo *NoteRepository) FindByID(ctx context.Context, pinID, noteID uuid.UUID) (*domain.Note, error) {
 	query := `
 		SELECT id, pin_id, content, created_at, updated_at
 		FROM notes WHERE id = $1 AND pin_id = $2`
-	n := &domain.Note{}
-	err := r.db.QueryRowContext(ctx, query, noteID, pinID).
-		Scan(&n.ID, &n.PinID, &n.Content, &n.CreatedAt, &n.UpdatedAt)
+	note := &domain.Note{}
+	err := repo.db.QueryRowContext(ctx, query, noteID, pinID).
+		Scan(&note.ID, &note.PinID, &note.Content, &note.CreatedAt, &note.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("find note by id: %w", err)
 	}
-	return n, nil
+	return note, nil
 }
 
-func (r *NoteRepository) FindByPinID(ctx context.Context, pinID uuid.UUID) ([]*domain.Note, error) {
+func (repo *NoteRepository) FindByPinID(ctx context.Context, pinID uuid.UUID) ([]*domain.Note, error) {
 	query := `
 		SELECT id, pin_id, content, created_at, updated_at
 		FROM notes WHERE pin_id = $1 ORDER BY created_at ASC`
-	rows, err := r.db.QueryContext(ctx, query, pinID)
+	rows, err := repo.db.QueryContext(ctx, query, pinID)
 	if err != nil {
 		return nil, fmt.Errorf("find notes by pin id: %w", err)
 	}
@@ -65,11 +65,11 @@ func (r *NoteRepository) FindByPinID(ctx context.Context, pinID uuid.UUID) ([]*d
 
 	var notes []*domain.Note
 	for rows.Next() {
-		n := &domain.Note{}
-		if err := rows.Scan(&n.ID, &n.PinID, &n.Content, &n.CreatedAt, &n.UpdatedAt); err != nil {
+		note := &domain.Note{}
+		if err := rows.Scan(&note.ID, &note.PinID, &note.Content, &note.CreatedAt, &note.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan note: %w", err)
 		}
-		notes = append(notes, n)
+		notes = append(notes, note)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("find notes by pin id rows: %w", err)
@@ -77,12 +77,12 @@ func (r *NoteRepository) FindByPinID(ctx context.Context, pinID uuid.UUID) ([]*d
 	return notes, nil
 }
 
-func (r *NoteRepository) Update(ctx context.Context, n *domain.Note) error {
+func (repo *NoteRepository) Update(ctx context.Context, note *domain.Note) error {
 	query := `
 		UPDATE notes SET content = $1, updated_at = NOW()
 		WHERE id = $2 AND pin_id = $3
 		RETURNING updated_at`
-	err := r.db.QueryRowContext(ctx, query, n.Content, n.ID, n.PinID).Scan(&n.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, query, note.Content, note.ID, note.PinID).Scan(&note.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrNotFound
 	}
@@ -92,17 +92,17 @@ func (r *NoteRepository) Update(ctx context.Context, n *domain.Note) error {
 	return nil
 }
 
-func (r *NoteRepository) Delete(ctx context.Context, pinID, noteID uuid.UUID) error {
+func (repo *NoteRepository) Delete(ctx context.Context, pinID, noteID uuid.UUID) error {
 	query := `DELETE FROM notes WHERE id = $1 AND pin_id = $2`
-	result, err := r.db.ExecContext(ctx, query, noteID, pinID)
+	result, err := repo.db.ExecContext(ctx, query, noteID, pinID)
 	if err != nil {
 		return fmt.Errorf("delete note: %w", err)
 	}
-	n, err := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("delete note rows affected: %w", err)
 	}
-	if n == 0 {
+	if rowsAffected == 0 {
 		return domain.ErrNotFound
 	}
 	return nil
