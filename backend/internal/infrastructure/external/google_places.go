@@ -101,19 +101,19 @@ func (c *GooglePlacesClient) Search(ctx context.Context, query string) ([]*spot.
 
 func toSpots(places []placeResult) []*spot.Spot {
 	spots := make([]*spot.Spot, 0, len(places))
-	for _, p := range places {
-		placeID, err := spot.NewPlaceID(p.ID)
+	for _, place := range places {
+		placeID, err := spot.NewPlaceID(place.ID)
 		if err != nil {
 			continue
 		}
-		location, err := spot.NewLocation(p.Location.Latitude, p.Location.Longitude)
+		location, err := spot.NewLocation(place.Location.Latitude, place.Location.Longitude)
 		if err != nil {
 			continue
 		}
 		spots = append(spots, &spot.Spot{
 			PlaceID:  placeID,
-			Name:     p.DisplayName.Text,
-			Address:  p.FormattedAddress,
+			Name:     place.DisplayName.Text,
+			Address:  place.FormattedAddress,
 			Location: location,
 		})
 	}
