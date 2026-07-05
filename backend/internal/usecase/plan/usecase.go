@@ -24,16 +24,16 @@ func (uc *UseCase) CreatePlan(ctx context.Context, title string) (*domain.Plan, 
 		return nil, fmt.Errorf("generate share token: %w", err)
 	}
 
-	p := &domain.Plan{
+	plan := &domain.Plan{
 		ID:         uuid.New(),
 		Title:      title,
 		ShareToken: token,
 	}
 
-	if err := uc.repo.Create(ctx, p); err != nil {
+	if err := uc.repo.Create(ctx, plan); err != nil {
 		return nil, fmt.Errorf("create plan: %w", err)
 	}
-	return p, nil
+	return plan, nil
 }
 
 func (uc *UseCase) GetPlanByShareToken(ctx context.Context, token string) (*domain.Plan, error) {
@@ -41,9 +41,9 @@ func (uc *UseCase) GetPlanByShareToken(ctx context.Context, token string) (*doma
 }
 
 func generateShareToken() (string, error) {
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
+	tokenBytes := make([]byte, 16)
+	if _, err := rand.Read(tokenBytes); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(b), nil
+	return hex.EncodeToString(tokenBytes), nil
 }
