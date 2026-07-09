@@ -42,7 +42,7 @@ export function PinCreateOverlay({ planId, spot, onCreated, onCancel }: Props) {
   };
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 w-72 rounded-xl bg-white p-4 shadow-lg">
+    <div className="absolute bottom-4 left-1/2 z-10 w-72 -translate-x-1/2 rounded-xl bg-white p-4 shadow-lg">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-zinc-500">Name</label>
@@ -51,7 +51,7 @@ export function PinCreateOverlay({ planId, spot, onCreated, onCancel }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={loading}
-            className="rounded border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-zinc-300"
+            className="rounded border px-2 py-1.5 text-sm text-black outline-none focus:ring-2 focus:ring-zinc-300"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -60,7 +60,7 @@ export function PinCreateOverlay({ planId, spot, onCreated, onCancel }: Props) {
             value={category}
             onChange={(e) => setCategory(e.target.value as PinCategory)}
             disabled={loading}
-            className="rounded border px-2 py-1.5 text-sm"
+            className="rounded border px-2 py-1.5 text-sm text-black"
           >
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
