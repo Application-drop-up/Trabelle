@@ -1,6 +1,6 @@
 import type { LatLng, MapAdapter, MapMarker } from "./adapter";
 
-type TtMarkerLike = { remove(): void };
+type TtMarkerLike = { remove(): void; getElement(): HTMLElement };
 type TtMapLike = {
   remove(): void;
   setCenter(center: { lng: number; lat: number }): void;
@@ -21,6 +21,8 @@ type TtRuntime = {
 };
 
 export class TomTomMapAdapter implements MapAdapter {
+  onMarkerClick?: (id: string) => void;
+
   private map: TtMapLike | null = null;
   private markerMap = new Map<string, TtMarkerLike>();
   private tt: TtRuntime | null = null;
@@ -43,6 +45,7 @@ export class TomTomMapAdapter implements MapAdapter {
     const m = new this.tt.Marker({ color })
       .setLngLat({ lng: position.lng, lat: position.lat })
       .addTo(this.map);
+    m.getElement().addEventListener("click", () => this.onMarkerClick?.(id));
     this.markerMap.set(id, m);
   }
 

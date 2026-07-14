@@ -12,10 +12,19 @@ type Props = {
   center: LatLng;
   zoom?: number;
   markers?: MapMarker[];
+  onMarkerClick?: (id: string) => void;
 };
 
-export function MapView({ center, zoom = 12, markers = [] }: Props) {
+export function MapView({ center, zoom = 12, markers = [], onMarkerClick }: Props) {
   const adapter = useMemo(() => new TomTomMapAdapter(), []);
 
-  return <MapCanvas adapter={adapter} center={center} zoom={zoom} markers={markers} />;
+  return (
+    <MapCanvas
+      adapter={adapter}
+      center={center}
+      zoom={zoom}
+      markers={markers}
+      onMarkerClick={onMarkerClick}
+    />
+  );
 }
