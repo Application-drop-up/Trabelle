@@ -15,12 +15,16 @@ type Props = {
 };
 
 const CATEGORIES: { value: PinCategory; label: string }[] = [
-  { value: "restaurant", label: "Restaurant" },
-  { value: "hotel", label: "Hotel" },
-  { value: "sightseeing", label: "Sightseeing" },
-  { value: "transport", label: "Transport" },
-  { value: "other", label: "Other" },
+  { value: "restaurant", label: "レストラン" },
+  { value: "hotel", label: "ホテル" },
+  { value: "sightseeing", label: "観光" },
+  { value: "transport", label: "交通" },
+  { value: "other", label: "その他" },
 ];
+
+const CATEGORY_LABEL: Record<PinCategory, string> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.value, c.label]),
+) as Record<PinCategory, string>;
 
 const COLOURS = ["#FF5733", "#33FF57", "#3357FF", "#FF33A8", "#FFD700"];
 
@@ -58,7 +62,7 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
           type="button"
           onClick={onClose}
           className="text-zinc-400 hover:text-zinc-700"
-          aria-label="Close"
+          aria-label="閉じる"
         >
           ✕
         </button>
@@ -67,7 +71,7 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
       {isEditing ? (
         <div className="mt-3 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-500">Category</label>
+            <label className="text-xs text-zinc-500">カテゴリ</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as PinCategory)}
@@ -82,7 +86,7 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-500">Colour</label>
+            <label className="text-xs text-zinc-500">色</label>
             <div className="flex gap-2">
               {COLOURS.map((c) => (
                 <button
@@ -105,7 +109,7 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
               disabled={loading}
               className="flex-1 rounded-lg bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {loading ? "Saving…" : "Save"}
+              {loading ? "保存中…" : "保存"}
             </button>
             <button
               type="button"
@@ -113,27 +117,27 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
               disabled={loading}
               className="rounded-lg border px-3 py-2 text-sm text-zinc-700 disabled:opacity-50"
             >
-              Cancel
+              キャンセル
             </button>
           </div>
         </div>
       ) : (
         <div className="mt-3 flex flex-col gap-3">
-          <span className="text-xs capitalize text-zinc-500">{pin.category}</span>
+          <span className="text-xs text-zinc-500">{CATEGORY_LABEL[pin.category]}</span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setIsEditing(true)}
               className="flex-1 rounded-lg border px-3 py-2 text-sm text-zinc-700"
             >
-              Edit
+              編集
             </button>
             <button
               type="button"
               onClick={onDelete}
               className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white"
             >
-              Delete
+              削除
             </button>
           </div>
         </div>

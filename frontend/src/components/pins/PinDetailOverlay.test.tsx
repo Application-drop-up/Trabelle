@@ -47,7 +47,7 @@ describe("PinDetailOverlay", () => {
     );
 
     expect(screen.getByText("Tokyo Tower")).toBeInTheDocument();
-    expect(screen.getByText("sightseeing")).toBeInTheDocument();
+    expect(screen.getByText("観光")).toBeInTheDocument();
   });
 
   it("calls onClose when close button is clicked", () => {
@@ -62,7 +62,7 @@ describe("PinDetailOverlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -78,7 +78,7 @@ describe("PinDetailOverlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /delete/i }));
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
@@ -93,10 +93,10 @@ describe("PinDetailOverlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
 
     expect(screen.getByRole("combobox")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "保存" })).toBeInTheDocument();
   });
 
   it("saves updated values and calls onUpdated", async () => {
@@ -113,9 +113,9 @@ describe("PinDetailOverlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "hotel" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
       expect(mockOnUpdate).toHaveBeenCalledWith(
@@ -138,11 +138,11 @@ describe("PinDetailOverlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit/i }));
-    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
 
     expect(mockOnUpdate).not.toHaveBeenCalled();
-    expect(screen.getByText("sightseeing")).toBeInTheDocument();
+    expect(screen.getByText("観光")).toBeInTheDocument();
   });
 
   it("shows error message when update fails", () => {
@@ -162,7 +162,7 @@ describe("PinDetailOverlay", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
     expect(screen.getByText("Failed to update pin")).toBeInTheDocument();
   });
 });
