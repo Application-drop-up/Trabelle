@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { usePinUpdateContainer } from "@/containers/PinUpdateContainer";
+import { PIN_CATEGORIES, PIN_CATEGORY_LABELS } from "@/domain/pins/labels";
 import type { PinCategory } from "@/domain/pins/types";
 import type { PinViewModel } from "@/mappers/planMapper";
 
@@ -13,18 +14,6 @@ type Props = {
   onDelete: () => void;
   onClose: () => void;
 };
-
-const CATEGORIES: { value: PinCategory; label: string }[] = [
-  { value: "restaurant", label: "レストラン" },
-  { value: "hotel", label: "ホテル" },
-  { value: "sightseeing", label: "観光" },
-  { value: "transport", label: "交通" },
-  { value: "other", label: "その他" },
-];
-
-const CATEGORY_LABEL: Record<PinCategory, string> = Object.fromEntries(
-  CATEGORIES.map((c) => [c.value, c.label]),
-) as Record<PinCategory, string>;
 
 const COLOURS = ["#FF5733", "#33FF57", "#3357FF", "#FF33A8", "#FFD700"];
 
@@ -78,9 +67,9 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
               disabled={loading}
               className="rounded border px-2 py-1.5 text-sm text-black"
             >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+              {PIN_CATEGORIES.map((value) => (
+                <option key={value} value={value}>
+                  {PIN_CATEGORY_LABELS[value]}
                 </option>
               ))}
             </select>
@@ -123,7 +112,7 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
         </div>
       ) : (
         <div className="mt-3 flex flex-col gap-3">
-          <span className="text-xs text-zinc-500">{CATEGORY_LABEL[pin.category]}</span>
+          <span className="text-xs text-zinc-500">{PIN_CATEGORY_LABELS[pin.category]}</span>
           <div className="flex gap-2">
             <button
               type="button"
