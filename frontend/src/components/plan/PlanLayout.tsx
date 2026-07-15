@@ -3,8 +3,10 @@
 import { useState } from "react";
 
 import type { PinViewModel, PlanViewModel } from "@/containers/PlanContainer";
+import { useSpotSearchContainer, type SpotViewModel } from "@/containers/SpotSearchContainer";
 import type { MapMarker } from "@/lib/map/adapter";
 import { MapView } from "@/components/map/MapView";
+import { PinCreateOverlay } from "@/components/pins/PinCreateOverlay";
 import { PinDetailOverlay } from "@/components/pins/PinDetailOverlay";
 
 import { BottomSheet } from "./BottomSheet";
@@ -17,10 +19,13 @@ type Props = {
   planVM: PlanViewModel;
   onDeletePin: (pinId: string) => Promise<void>;
   applyPinUpdate: (pin: PinViewModel) => void;
+  applyPinCreate: (pin: PinViewModel) => void;
 };
 
-export function PlanLayout({ planVM, onDeletePin, applyPinUpdate }: Props) {
+export function PlanLayout({ planVM, onDeletePin, applyPinUpdate, applyPinCreate }: Props) {
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  const [selectedSpot, setSelectedSpot] = useState<SpotViewModel | null>(null);
+  const spotSearch = useSpotSearchContainer();
 
   const markers: MapMarker[] = planVM.pins.map((pin) => ({
     id: pin.id,
@@ -30,10 +35,21 @@ export function PlanLayout({ planVM, onDeletePin, applyPinUpdate }: Props) {
 
   const selectedPin = planVM.pins.find((pin) => pin.id === selectedPinId) ?? null;
 
+  const handleSelectSpot = (spot: SpotViewModel) => {
+    setSelectedPinId(null);
+    setSelectedSpot(spot);
+  };
+
+  const handlePinCreated = (pin: PinViewModel) => {
+    applyPinCreate(pin);
+    setSelectedSpot(null);
+    spotSearch.onClear();
+  };
+
   return (
     <div className="relative flex flex-1 overflow-hidden">
       <Sidebar>
-        <PlanPanel planVM={planVM} />
+        <PlanPanel planVM={planVM} spotSearch={spotSearch} onSelectSpot={handleSelectSpot} />
       </Sidebar>
 
       <div className="flex-1">
@@ -46,7 +62,7 @@ export function PlanLayout({ planVM, onDeletePin, applyPinUpdate }: Props) {
       </div>
 
       <BottomSheet>
-        <PlanPanel planVM={planVM} />
+        <PlanPanel planVM={planVM} spotSearch={spotSearch} onSelectSpot={handleSelectSpot} />
       </BottomSheet>
 
       {selectedPin && (
@@ -59,6 +75,15 @@ export function PlanLayout({ planVM, onDeletePin, applyPinUpdate }: Props) {
             setSelectedPinId(null);
           }}
           onClose={() => setSelectedPinId(null)}
+        />
+      )}
+
+      {selectedSpot && (
+        <PinCreateOverlay
+          planId={planVM.id}
+          spot={selectedSpot}
+          onCreated={handlePinCreated}
+          onCancel={() => setSelectedSpot(null)}
         />
       )}
     </div>

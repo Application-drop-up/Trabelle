@@ -189,6 +189,40 @@ describe("usePlanContainer", () => {
     });
   });
 
+  describe("applyPinCreate", () => {
+    it("appends the pin to planVM.pins without calling fetch", async () => {
+      mockFetchOnce(mockPlan);
+
+      const { result } = renderHook(() => usePlanContainer("abc123"));
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      const fetchSpy = jest.fn();
+      global.fetch = fetchSpy;
+
+      act(() => {
+        result.current.applyPinCreate({
+          id: "pin-2",
+          planId: "plan-1",
+          name: "Skytree",
+          latitude: 35.7101,
+          longitude: 139.8107,
+          category: "sightseeing",
+          colour: "#3399FF",
+          notes: [],
+          createdAt: new Date("2024-01-01T00:00:00Z"),
+          updatedAt: new Date("2024-01-01T00:00:00Z"),
+        });
+      });
+
+      expect(result.current.planVM?.pins).toHaveLength(2);
+      expect(result.current.planVM?.pins.at(-1)?.name).toBe("Skytree");
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe("onDeletePin", () => {
     it("removes the deleted pin from planVM.pins", async () => {
       global.fetch = jest

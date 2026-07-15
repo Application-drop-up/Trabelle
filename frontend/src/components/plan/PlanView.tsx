@@ -7,7 +7,8 @@ import { PlanLayout } from "./PlanLayout";
 type Props = { shareToken: string };
 
 export function PlanView({ shareToken }: Props) {
-  const { planVM, loading, error, onDeletePin, applyPinUpdate } = usePlanContainer(shareToken);
+  const { planVM, loading, error, onDeletePin, applyPinUpdate, applyPinCreate } =
+    usePlanContainer(shareToken);
 
   if (loading) {
     return (
@@ -27,5 +28,12 @@ export function PlanView({ shareToken }: Props) {
 
   if (!planVM) return null;
 
-  return <PlanLayout planVM={planVM} onDeletePin={onDeletePin} applyPinUpdate={applyPinUpdate} />;
+  return (
+    <PlanLayout
+      planVM={planVM}
+      onDeletePin={onDeletePin}
+      applyPinUpdate={applyPinUpdate}
+      applyPinCreate={applyPinCreate}
+    />
+  );
 }

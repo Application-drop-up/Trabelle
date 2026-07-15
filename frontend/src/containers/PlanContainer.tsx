@@ -23,6 +23,7 @@ type UsePlanContainerReturn = {
   onUpdatePin: (pinId: string, data: UpdatePinInput) => Promise<void>;
   onDeletePin: (pinId: string) => Promise<void>;
   applyPinUpdate: (pin: PinViewModel) => void;
+  applyPinCreate: (pin: PinViewModel) => void;
   onCreateNote: (pinId: string, content: string) => Promise<void>;
   onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
   onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
@@ -91,6 +92,10 @@ export function usePlanContainer(shareToken: string): UsePlanContainerReturn {
           }
         : prev,
     );
+  }, []);
+
+  const applyPinCreate = useCallback((pin: PinViewModel) => {
+    setPlanVM((prev) => (prev ? { ...prev, pins: [...prev.pins, pin] } : prev));
   }, []);
 
   const onCreateNote = useCallback(
@@ -163,6 +168,7 @@ export function usePlanContainer(shareToken: string): UsePlanContainerReturn {
     onUpdatePin,
     onDeletePin,
     applyPinUpdate,
+    applyPinCreate,
     onCreateNote,
     onUpdateNote,
     onDeleteNote,
