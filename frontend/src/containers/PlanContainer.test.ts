@@ -154,6 +154,41 @@ describe("usePlanContainer", () => {
     });
   });
 
+  describe("applyPinUpdate", () => {
+    it("replaces the pin's fields in planVM.pins while keeping its notes, without calling fetch", async () => {
+      mockFetchOnce(mockPlan);
+
+      const { result } = renderHook(() => usePlanContainer("abc123"));
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      const fetchSpy = jest.fn();
+      global.fetch = fetchSpy;
+
+      act(() => {
+        result.current.applyPinUpdate({
+          id: "pin-1",
+          planId: "plan-1",
+          name: "Tokyo Tower",
+          latitude: 35.6586,
+          longitude: 139.7454,
+          category: "restaurant",
+          colour: "#00FF00",
+          notes: [],
+          createdAt: new Date("2024-01-01T00:00:00Z"),
+          updatedAt: new Date("2024-01-01T00:00:00Z"),
+        });
+      });
+
+      expect(result.current.planVM?.pins[0].colour).toBe("#00FF00");
+      expect(result.current.planVM?.pins[0].category).toBe("restaurant");
+      expect(result.current.planVM?.pins[0].notes).toHaveLength(1);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe("onDeletePin", () => {
     it("removes the deleted pin from planVM.pins", async () => {
       global.fetch = jest
