@@ -25,7 +25,7 @@ func main() {
 		log.Fatal("GOOGLE_PLACES_API_KEY is not set")
 	}
 
-	r := router.New(conn, apiKey)
+	r := router.New(conn, apiKey, []string{"http://localhost:3000", "http://localhost:3001"})
 
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
