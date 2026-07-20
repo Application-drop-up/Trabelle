@@ -37,95 +37,95 @@ type noteResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-func toNoteResponse(n *domain.Note) noteResponse {
+func toNoteResponse(note *domain.Note) noteResponse {
 	return noteResponse{
-		ID:        n.ID.String(),
-		PinID:     n.PinID.String(),
-		Content:   n.Content,
-		CreatedAt: n.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: n.UpdatedAt.UTC().Format(time.RFC3339),
+		ID:        note.ID.String(),
+		PinID:     note.PinID.String(),
+		Content:   note.Content,
+		CreatedAt: note.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: note.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 
-func (h *NoteHandler) Create(w http.ResponseWriter, r *http.Request) {
-	pinID, err := uuid.Parse(chi.URLParam(r, "pin_id"))
+func (nh *NoteHandler) Create(rw http.ResponseWriter, req *http.Request) {
+	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid pin_id")
+		writeError(rw, http.StatusBadRequest, "invalid pin_id")
 		return
 	}
 
-	var req createNoteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Content == "" {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+	var body createNoteRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil || body.Content == "" {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	n, err := h.uc.CreateNote(r.Context(), noteuc.CreateInput{
+	note, err := nh.uc.CreateNote(req.Context(), noteuc.CreateInput{
 		PinID:   pinID,
-		Content: req.Content,
+		Content: body.Content,
 	})
 	if errors.Is(err, pindomain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "pin not found")
+		writeError(rw, http.StatusNotFound, "pin not found")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toNoteResponse(n))
+	writeJSON(rw, http.StatusCreated, toNoteResponse(note))
 }
 
-func (h *NoteHandler) Update(w http.ResponseWriter, r *http.Request) {
-	pinID, err := uuid.Parse(chi.URLParam(r, "pin_id"))
+func (nh *NoteHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid pin_id")
+		writeError(rw, http.StatusBadRequest, "invalid pin_id")
 		return
 	}
-	noteID, err := uuid.Parse(chi.URLParam(r, "note_id"))
+	noteID, err := uuid.Parse(chi.URLParam(req, "note_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid note_id")
+		writeError(rw, http.StatusBadRequest, "invalid note_id")
 		return
 	}
 
-	var req updateNoteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Content == "" {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+	var body updateNoteRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil || body.Content == "" {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	n, err := h.uc.UpdateNote(r.Context(), pinID, noteID, noteuc.UpdateInput{Content: req.Content})
+	note, err := nh.uc.UpdateNote(req.Context(), pinID, noteID, noteuc.UpdateInput{Content: body.Content})
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "note not found")
+		writeError(rw, http.StatusNotFound, "note not found")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toNoteResponse(n))
+	writeJSON(rw, http.StatusOK, toNoteResponse(note))
 }
 
-func (h *NoteHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	pinID, err := uuid.Parse(chi.URLParam(r, "pin_id"))
+func (nh *NoteHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid pin_id")
+		writeError(rw, http.StatusBadRequest, "invalid pin_id")
 		return
 	}
-	noteID, err := uuid.Parse(chi.URLParam(r, "note_id"))
+	noteID, err := uuid.Parse(chi.URLParam(req, "note_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid note_id")
+		writeError(rw, http.StatusBadRequest, "invalid note_id")
 		return
 	}
 
-	if err := h.uc.DeleteNote(r.Context(), pinID, noteID); errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "note not found")
+	if err := nh.uc.DeleteNote(req.Context(), pinID, noteID); errors.Is(err, domain.ErrNotFound) {
+		writeError(rw, http.StatusNotFound, "note not found")
 		return
 	} else if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	rw.WriteHeader(http.StatusNoContent)
 }

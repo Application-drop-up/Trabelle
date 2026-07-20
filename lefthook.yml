@@ -14,7 +14,7 @@ pre-commit:
     - name: backend-lint
       root: backend/
       glob: "*.go"
-      run: golangci-lint run ./...
+      run: docker compose -f ../infra/docker-compose.yml run --no-deps --rm go-lint golangci-lint run ./...
 
 commit-msg:
   jobs:

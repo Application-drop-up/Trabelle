@@ -66,5 +66,12 @@ services:
     environment:
       SWAGGER_JSON: /swagger/openapi.yaml
 
+  go-lint:
+    build:
+      context: ..
+      dockerfile: infra/docker/go/Dockerfile.dev
+    volumes:
+      - ../backend:/app
+
 volumes:
   postgres_data:

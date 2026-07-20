@@ -9,12 +9,12 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v) //nolint:errcheck
+func writeJSON(rw http.ResponseWriter, status int, data any) {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(status)
+	json.NewEncoder(rw).Encode(data) //nolint:errcheck
 }
 
-func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, errorResponse{Message: msg})
+func writeError(rw http.ResponseWriter, status int, msg string) {
+	writeJSON(rw, status, errorResponse{Message: msg})
 }
