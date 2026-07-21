@@ -12,9 +12,10 @@ import (
 	spotuc "github.com/Application-drop-up/Travellle/internal/usecase/spot"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
-func New(db *sql.DB, googlePlacesAPIKey string) *chi.Mux {
+func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mux {
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
@@ -29,6 +30,13 @@ func New(db *sql.DB, googlePlacesAPIKey string) *chi.Mux {
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   allowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 
 	mux.Get("/health", handler.Health)
 
