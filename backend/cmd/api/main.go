@@ -27,11 +27,16 @@ func main() {
 	if apiKey == "" {
 		log.Fatal("GOOGLE_PLACES_API_KEY is not set")
 	}
-  
-	routing := router.New(conn, apiKey, []string{"http://localhost:3000", "http://localhost:3001"})
+
+	origins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if origins == "" {
+		origins = defaultAllowedOrigins
+	}
+
+	r := router.New(conn, apiKey, strings.Split(origins, ","))
 
 	log.Println("Server starting on :8080")
-	if err := http.ListenAndServe(":8080", routing); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }
