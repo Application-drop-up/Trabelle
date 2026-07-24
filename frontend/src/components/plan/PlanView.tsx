@@ -7,7 +7,7 @@ import { PlanLayout } from "./PlanLayout";
 type Props = { shareToken: string };
 
 export function PlanView({ shareToken }: Props) {
-  const { planVM, loading, error } = usePlanContainer(shareToken);
+  const { planVM, loading, error, onCreateNote } = usePlanContainer(shareToken);
 
   if (loading) {
     return (
@@ -27,5 +27,5 @@ export function PlanView({ shareToken }: Props) {
 
   if (!planVM) return null;
 
-  return <PlanLayout planVM={planVM} />;
+  return <PlanLayout planVM={planVM} onCreateNote={onCreateNote} />;
 }

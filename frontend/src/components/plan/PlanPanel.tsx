@@ -6,9 +6,10 @@ import { PinList } from "./PinList";
 
 type Props = {
   planVM: PlanViewModel;
+  onCreateNote: (pinId: string, content: string) => Promise<void>;
 };
 
-export function PlanPanel({ planVM }: Props) {
+export function PlanPanel({ planVM, onCreateNote }: Props) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-zinc-200 px-4 py-3">
@@ -33,7 +34,7 @@ export function PlanPanel({ planVM }: Props) {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        <PinList pins={planVM.pins} />
+        <PinList pins={planVM.pins} onCreateNote={onCreateNote} />
       </div>
     </div>
   );
