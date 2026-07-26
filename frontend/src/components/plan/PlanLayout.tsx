@@ -13,9 +13,10 @@ const DEFAULT_CENTER = { lat: 35.6762, lng: 139.6503 } as const;
 type Props = {
   planVM: PlanViewModel;
   onCreateNote: (pinId: string, content: string) => Promise<void>;
+  onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
 };
 
-export function PlanLayout({ planVM, onCreateNote }: Props) {
+export function PlanLayout({ planVM, onCreateNote, onUpdateNote }: Props) {
   const markers: MapMarker[] = planVM.pins.map((pin) => ({
     id: pin.id,
     position: { lat: pin.latitude, lng: pin.longitude },
@@ -25,7 +26,7 @@ export function PlanLayout({ planVM, onCreateNote }: Props) {
   return (
     <div className="relative flex flex-1 overflow-hidden">
       <Sidebar>
-        <PlanPanel planVM={planVM} onCreateNote={onCreateNote} />
+        <PlanPanel planVM={planVM} onCreateNote={onCreateNote} onUpdateNote={onUpdateNote} />
       </Sidebar>
 
       <div className="flex-1">
@@ -33,7 +34,7 @@ export function PlanLayout({ planVM, onCreateNote }: Props) {
       </div>
 
       <BottomSheet>
-        <PlanPanel planVM={planVM} onCreateNote={onCreateNote} />
+        <PlanPanel planVM={planVM} onCreateNote={onCreateNote} onUpdateNote={onUpdateNote} />
       </BottomSheet>
     </div>
   );
