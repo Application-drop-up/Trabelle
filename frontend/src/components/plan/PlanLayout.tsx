@@ -20,9 +20,20 @@ type Props = {
   onDeletePin: (pinId: string) => Promise<void>;
   applyPinUpdate: (pin: PinViewModel) => void;
   applyPinCreate: (pin: PinViewModel) => void;
+  onCreateNote: (pinId: string, content: string) => Promise<void>;
+  onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
+  onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
 };
 
-export function PlanLayout({ planVM, onDeletePin, applyPinUpdate, applyPinCreate }: Props) {
+export function PlanLayout({
+  planVM,
+  onDeletePin,
+  applyPinUpdate,
+  applyPinCreate,
+  onCreateNote,
+  onUpdateNote,
+  onDeleteNote,
+}: Props) {
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [selectedSpot, setSelectedSpot] = useState<SpotViewModel | null>(null);
   const spotSearch = useSpotSearchContainer();
@@ -49,7 +60,14 @@ export function PlanLayout({ planVM, onDeletePin, applyPinUpdate, applyPinCreate
   return (
     <div className="relative flex flex-1 overflow-hidden">
       <Sidebar>
-        <PlanPanel planVM={planVM} spotSearch={spotSearch} onSelectSpot={handleSelectSpot} />
+        <PlanPanel
+          planVM={planVM}
+          spotSearch={spotSearch}
+          onSelectSpot={handleSelectSpot}
+          onCreateNote={onCreateNote}
+          onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
+        />
       </Sidebar>
 
       <div className="flex-1">
@@ -62,7 +80,14 @@ export function PlanLayout({ planVM, onDeletePin, applyPinUpdate, applyPinCreate
       </div>
 
       <BottomSheet>
-        <PlanPanel planVM={planVM} spotSearch={spotSearch} onSelectSpot={handleSelectSpot} />
+        <PlanPanel
+          planVM={planVM}
+          spotSearch={spotSearch}
+          onSelectSpot={handleSelectSpot}
+          onCreateNote={onCreateNote}
+          onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
+        />
       </BottomSheet>
 
       {selectedPin && (
