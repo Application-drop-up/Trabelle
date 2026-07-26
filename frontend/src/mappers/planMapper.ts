@@ -1,5 +1,5 @@
 import type { Note } from "@/domain/notes/types";
-import type { Pin, PinWithNotes } from "@/domain/pins/types";
+import type { Pin, PinCategory, PinWithNotes } from "@/domain/pins/types";
 import type { Plan } from "@/domain/plans/types";
 import type { Spot } from "@/domain/spots/types";
 
@@ -17,7 +17,7 @@ export type PinViewModel = {
   name: string;
   latitude: number;
   longitude: number;
-  category: string;
+  category: PinCategory;
   colour: string;
   notes: NoteViewModel[];
   createdAt: Date;

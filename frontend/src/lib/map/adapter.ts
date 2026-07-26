@@ -7,6 +7,7 @@ export type MapMarker = {
 };
 
 export interface MapAdapter {
+  onMarkerClick?: (id: string) => void;
   initialize(container: HTMLElement, center: LatLng, zoom: number): Promise<void>;
   addMarker(marker: MapMarker): void;
   removeMarker(id: string): void;
