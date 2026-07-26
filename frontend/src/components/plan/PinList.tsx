@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { PinViewModel } from "@/containers/PlanContainer";
+import { PIN_CATEGORY_LABELS } from "@/domain/pins/labels";
 
 type Props = {
   pins: PinViewModel[];
@@ -31,7 +32,7 @@ export function PinList({ pins }: Props) {
                 style={{ backgroundColor: pin.colour }}
               />
               <span className="flex-1 text-sm font-medium text-zinc-900">{pin.name}</span>
-              <span className="text-xs text-zinc-400">{pin.category}</span>
+              <span className="text-xs text-zinc-400">{PIN_CATEGORY_LABELS[pin.category]}</span>
               <svg
                 className={`h-4 w-4 flex-shrink-0 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                 fill="none"

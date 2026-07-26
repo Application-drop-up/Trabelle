@@ -9,12 +9,17 @@ type Props = {
   center: LatLng;
   zoom: number;
   markers: MapMarker[];
+  onMarkerClick?: (id: string) => void;
 };
 
-export default function MapCanvas({ adapter, center, zoom, markers }: Props) {
+export default function MapCanvas({ adapter, center, zoom, markers, onMarkerClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const prevMarkerIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    adapter.onMarkerClick = onMarkerClick;
+  }, [adapter, onMarkerClick]);
 
   useEffect(() => {
     if (!containerRef.current) return;
