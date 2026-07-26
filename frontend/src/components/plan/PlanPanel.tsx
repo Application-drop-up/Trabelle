@@ -12,9 +12,17 @@ type Props = {
   onSelectSpot: (spot: SpotViewModel) => void;
   onCreateNote: (pinId: string, content: string) => Promise<void>;
   onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
+  onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
 };
 
-export function PlanPanel({ planVM, spotSearch, onSelectSpot, onCreateNote, onUpdateNote }: Props) {
+export function PlanPanel({
+  planVM,
+  spotSearch,
+  onSelectSpot,
+  onCreateNote,
+  onUpdateNote,
+  onDeleteNote,
+}: Props) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-zinc-200 px-4 py-3">
@@ -33,7 +41,12 @@ export function PlanPanel({ planVM, spotSearch, onSelectSpot, onCreateNote, onUp
         />
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        <PinList pins={planVM.pins} onCreateNote={onCreateNote} onUpdateNote={onUpdateNote} />
+        <PinList
+          pins={planVM.pins}
+          onCreateNote={onCreateNote}
+          onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
+        />
       </div>
     </div>
   );

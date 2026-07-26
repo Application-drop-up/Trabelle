@@ -9,9 +9,10 @@ type Props = {
   pins: PinViewModel[];
   onCreateNote: (pinId: string, content: string) => Promise<void>;
   onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
+  onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
 };
 
-export function PinList({ pins, onCreateNote, onUpdateNote }: Props) {
+export function PinList({ pins, onCreateNote, onUpdateNote, onDeleteNote }: Props) {
   const [openPinId, setOpenPinId] = useState<string | null>(null);
 
   if (pins.length === 0) {
@@ -28,6 +29,7 @@ export function PinList({ pins, onCreateNote, onUpdateNote }: Props) {
           onToggle={() => setOpenPinId(openPinId === pin.id ? null : pin.id)}
           onCreateNote={onCreateNote}
           onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
         />
       ))}
     </ul>
@@ -40,9 +42,17 @@ type PinListItemProps = {
   onToggle: () => void;
   onCreateNote: (pinId: string, content: string) => Promise<void>;
   onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
+  onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
 };
 
-function PinListItem({ pin, isOpen, onToggle, onCreateNote, onUpdateNote }: PinListItemProps) {
+function PinListItem({
+  pin,
+  isOpen,
+  onToggle,
+  onCreateNote,
+  onUpdateNote,
+  onDeleteNote,
+}: PinListItemProps) {
   const [newNote, setNewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -84,7 +94,13 @@ function PinListItem({ pin, isOpen, onToggle, onCreateNote, onUpdateNote }: PinL
           ) : (
             <ul className="flex flex-col gap-1">
               {pin.notes.map((note) => (
-                <NoteRow key={note.id} pinId={pin.id} note={note} onUpdateNote={onUpdateNote} />
+                <NoteRow
+                  key={note.id}
+                  pinId={pin.id}
+                  note={note}
+                  onUpdateNote={onUpdateNote}
+                  onDeleteNote={onDeleteNote}
+                />
               ))}
             </ul>
           )}
@@ -116,12 +132,14 @@ type NoteRowProps = {
   pinId: string;
   note: NoteViewModel;
   onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
+  onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
 };
 
-function NoteRow({ pinId, note, onUpdateNote }: NoteRowProps) {
+function NoteRow({ pinId, note, onUpdateNote, onDeleteNote }: NoteRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(note.content);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async () => {
     if (!content.trim()) return;
@@ -134,6 +152,11 @@ function NoteRow({ pinId, note, onUpdateNote }: NoteRowProps) {
   const handleCancel = () => {
     setContent(note.content);
     setIsEditing(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    await onDeleteNote(pinId, note.id);
   };
 
   if (isEditing) {
@@ -171,13 +194,24 @@ function NoteRow({ pinId, note, onUpdateNote }: NoteRowProps) {
   return (
     <li className="flex items-start justify-between gap-2 text-sm text-zinc-700">
       <span className="flex-1">{note.content}</span>
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="flex-shrink-0 text-xs text-zinc-400 hover:text-zinc-700"
-      >
-        編集
-      </button>
+      <div className="flex flex-shrink-0 gap-2">
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          disabled={deleting}
+          className="text-xs text-zinc-400 hover:text-zinc-700 disabled:opacity-50"
+        >
+          編集
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+        >
+          {deleting ? "削除中…" : "削除"}
+        </button>
+      </div>
     </li>
   );
 }

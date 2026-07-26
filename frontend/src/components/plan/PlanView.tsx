@@ -16,6 +16,7 @@ export function PlanView({ shareToken }: Props) {
     applyPinCreate,
     onCreateNote,
     onUpdateNote,
+    onDeleteNote,
   } = usePlanContainer(shareToken);
 
   if (loading) {
@@ -44,6 +45,7 @@ export function PlanView({ shareToken }: Props) {
       applyPinCreate={applyPinCreate}
       onCreateNote={onCreateNote}
       onUpdateNote={onUpdateNote}
+      onDeleteNote={onDeleteNote}
     />
   );
 }

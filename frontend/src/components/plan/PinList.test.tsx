@@ -26,12 +26,26 @@ const mockPin: PinViewModel = {
 
 describe("PinList", () => {
   it("shows a placeholder when there are no pins", () => {
-    render(<PinList pins={[]} onCreateNote={jest.fn()} onUpdateNote={jest.fn()} />);
+    render(
+      <PinList
+        pins={[]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={jest.fn()}
+      />,
+    );
     expect(screen.getByText("ピンがまだありません")).toBeInTheDocument();
   });
 
   it("shows existing notes and an add-note form when expanded", () => {
-    render(<PinList pins={[mockPin]} onCreateNote={jest.fn()} onUpdateNote={jest.fn()} />);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={jest.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByText("Tokyo Tower"));
 
@@ -40,7 +54,14 @@ describe("PinList", () => {
   });
 
   it("disables the add button until text is entered", () => {
-    render(<PinList pins={[mockPin]} onCreateNote={jest.fn()} onUpdateNote={jest.fn()} />);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={jest.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByText("Tokyo Tower"));
 
@@ -55,7 +76,14 @@ describe("PinList", () => {
 
   it("calls onCreateNote with the pin id and content, then clears the input", async () => {
     const onCreateNote = jest.fn().mockResolvedValue(undefined);
-    render(<PinList pins={[mockPin]} onCreateNote={onCreateNote} onUpdateNote={jest.fn()} />);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={onCreateNote}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={jest.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByText("Tokyo Tower"));
     fireEvent.change(screen.getByPlaceholderText("メモを追加..."), {
@@ -71,7 +99,14 @@ describe("PinList", () => {
   });
 
   it("shows an edit button for each note and enters edit mode when clicked", () => {
-    render(<PinList pins={[mockPin]} onCreateNote={jest.fn()} onUpdateNote={jest.fn()} />);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={jest.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByText("Tokyo Tower"));
     fireEvent.click(screen.getByRole("button", { name: "編集" }));
@@ -83,7 +118,14 @@ describe("PinList", () => {
 
   it("calls onUpdateNote with the pin id, note id, and new content", async () => {
     const onUpdateNote = jest.fn().mockResolvedValue(undefined);
-    render(<PinList pins={[mockPin]} onCreateNote={jest.fn()} onUpdateNote={onUpdateNote} />);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={onUpdateNote}
+        onDeleteNote={jest.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByText("Tokyo Tower"));
     fireEvent.click(screen.getByRole("button", { name: "編集" }));
@@ -102,7 +144,14 @@ describe("PinList", () => {
 
   it("reverts to the original content on cancel without saving", () => {
     const onUpdateNote = jest.fn();
-    render(<PinList pins={[mockPin]} onCreateNote={jest.fn()} onUpdateNote={onUpdateNote} />);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={onUpdateNote}
+        onDeleteNote={jest.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByText("Tokyo Tower"));
     fireEvent.click(screen.getByRole("button", { name: "編集" }));
@@ -113,5 +162,39 @@ describe("PinList", () => {
 
     expect(onUpdateNote).not.toHaveBeenCalled();
     expect(screen.getByText("Visit the observation deck")).toBeInTheDocument();
+  });
+
+  it("shows a delete button for each note", () => {
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Tokyo Tower"));
+
+    expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+  });
+
+  it("calls onDeleteNote with the pin id and note id", async () => {
+    const onDeleteNote = jest.fn().mockResolvedValue(undefined);
+    render(
+      <PinList
+        pins={[mockPin]}
+        onCreateNote={jest.fn()}
+        onUpdateNote={jest.fn()}
+        onDeleteNote={onDeleteNote}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Tokyo Tower"));
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+
+    await waitFor(() => {
+      expect(onDeleteNote).toHaveBeenCalledWith("pin-1", "note-1");
+    });
   });
 });
