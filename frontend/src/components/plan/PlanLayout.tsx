@@ -22,6 +22,7 @@ type Props = {
   applyPinCreate: (pin: PinViewModel) => void;
   onCreateNote: (pinId: string, content: string) => Promise<void>;
   onUpdateNote: (pinId: string, noteId: string, content: string) => Promise<void>;
+  onDeleteNote: (pinId: string, noteId: string) => Promise<void>;
 };
 
 export function PlanLayout({
@@ -31,6 +32,7 @@ export function PlanLayout({
   applyPinCreate,
   onCreateNote,
   onUpdateNote,
+  onDeleteNote,
 }: Props) {
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [selectedSpot, setSelectedSpot] = useState<SpotViewModel | null>(null);
@@ -64,6 +66,7 @@ export function PlanLayout({
           onSelectSpot={handleSelectSpot}
           onCreateNote={onCreateNote}
           onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
         />
       </Sidebar>
 
@@ -83,6 +86,7 @@ export function PlanLayout({
           onSelectSpot={handleSelectSpot}
           onCreateNote={onCreateNote}
           onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
         />
       </BottomSheet>
 
