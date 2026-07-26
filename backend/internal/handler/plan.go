@@ -14,8 +14,8 @@ import (
 )
 
 type PlanHandler struct {
-	uc    *planuc.UseCase
-	pinUC *pinuc.UseCase
+	uc     *planuc.UseCase
+	pinUC  *pinuc.UseCase
 	noteUC *noteuc.UseCase
 }
 
@@ -28,12 +28,12 @@ type createPlanRequest struct {
 }
 
 type planResponse struct {
-	ID         string        `json:"id"`
-	ShareToken string        `json:"share_token"`
-	Title      string        `json:"title"`
+	ID         string         `json:"id"`
+	ShareToken string         `json:"share_token"`
+	Title      string         `json:"title"`
 	Pins       []pinWithNotes `json:"pins"`
-	CreatedAt  string        `json:"created_at"`
-	UpdatedAt  string        `json:"updated_at"`
+	CreatedAt  string         `json:"created_at"`
+	UpdatedAt  string         `json:"updated_at"`
 }
 
 type pinWithNotes struct {
@@ -41,63 +41,63 @@ type pinWithNotes struct {
 	Notes []noteResponse `json:"notes"`
 }
 
-func toPlanResponse(p *domain.Plan, pins []pinWithNotes) planResponse {
+func toPlanResponse(plan *domain.Plan, pins []pinWithNotes) planResponse {
 	return planResponse{
-		ID:         p.ID.String(),
-		ShareToken: p.ShareToken,
-		Title:      p.Title,
+		ID:         plan.ID.String(),
+		ShareToken: plan.ShareToken,
+		Title:      plan.Title,
 		Pins:       pins,
-		CreatedAt:  p.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:  p.UpdatedAt.UTC().Format(time.RFC3339),
+		CreatedAt:  plan.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:  plan.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 
-func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req createPlanRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Title == "" {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+func (ph *PlanHandler) Create(rw http.ResponseWriter, req *http.Request) {
+	var body createPlanRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil || body.Title == "" {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	p, err := h.uc.CreatePlan(r.Context(), req.Title)
+	plan, err := ph.uc.CreatePlan(req.Context(), body.Title)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toPlanResponse(p, []pinWithNotes{}))
+	writeJSON(rw, http.StatusCreated, toPlanResponse(plan, []pinWithNotes{}))
 }
 
-func (h *PlanHandler) GetByShareToken(w http.ResponseWriter, r *http.Request) {
-	token := chi.URLParam(r, "share_token")
-	ctx := r.Context()
+func (ph *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *http.Request) {
+	token := chi.URLParam(req, "share_token")
+	ctx := req.Context()
 
-	p, err := h.uc.GetPlanByShareToken(ctx, token)
+	plan, err := ph.uc.GetPlanByShareToken(ctx, token)
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "plan not found")
+		writeError(rw, http.StatusNotFound, "plan not found")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	rawPins, err := h.pinUC.ListPins(ctx, p.ID)
+	rawPins, err := ph.pinUC.ListPins(ctx, plan.ID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
 	pins := make([]pinWithNotes, 0, len(rawPins))
 	for _, pin := range rawPins {
-		rawNotes, err := h.noteUC.ListNotes(ctx, pin.ID)
+		rawNotes, err := ph.noteUC.ListNotes(ctx, pin.ID)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeError(rw, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		notes := make([]noteResponse, 0, len(rawNotes))
-		for _, n := range rawNotes {
-			notes = append(notes, toNoteResponse(n))
+		for _, note := range rawNotes {
+			notes = append(notes, toNoteResponse(note))
 		}
 		pins = append(pins, pinWithNotes{
 			pinResponse: toPinResponse(pin),
@@ -105,5 +105,5 @@ func (h *PlanHandler) GetByShareToken(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	writeJSON(w, http.StatusOK, toPlanResponse(p, pins))
+	writeJSON(rw, http.StatusOK, toPlanResponse(plan, pins))
 }

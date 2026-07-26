@@ -26,27 +26,27 @@ type UpdateInput struct {
 }
 
 func (uc *UseCase) CreateNote(ctx context.Context, input CreateInput) (*domain.Note, error) {
-	n := &domain.Note{
+	note := &domain.Note{
 		ID:      uuid.New(),
 		PinID:   input.PinID,
 		Content: input.Content,
 	}
-	if err := uc.repo.Create(ctx, n); err != nil {
+	if err := uc.repo.Create(ctx, note); err != nil {
 		return nil, fmt.Errorf("create note: %w", err)
 	}
-	return n, nil
+	return note, nil
 }
 
 func (uc *UseCase) UpdateNote(ctx context.Context, pinID, noteID uuid.UUID, input UpdateInput) (*domain.Note, error) {
-	n, err := uc.repo.FindByID(ctx, pinID, noteID)
+	note, err := uc.repo.FindByID(ctx, pinID, noteID)
 	if err != nil {
 		return nil, err
 	}
-	n.Content = input.Content
-	if err := uc.repo.Update(ctx, n); err != nil {
+	note.Content = input.Content
+	if err := uc.repo.Update(ctx, note); err != nil {
 		return nil, fmt.Errorf("update note: %w", err)
 	}
-	return n, nil
+	return note, nil
 }
 
 func (uc *UseCase) DeleteNote(ctx context.Context, pinID, noteID uuid.UUID) error {

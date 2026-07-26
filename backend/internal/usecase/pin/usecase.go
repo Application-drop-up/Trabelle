@@ -31,7 +31,7 @@ type UpdateInput struct {
 }
 
 func (uc *UseCase) CreatePin(ctx context.Context, input CreateInput) (*domain.Pin, error) {
-	p := &domain.Pin{
+	pin := &domain.Pin{
 		ID:        uuid.New(),
 		PlanID:    input.PlanID,
 		Name:      input.Name,
@@ -41,29 +41,29 @@ func (uc *UseCase) CreatePin(ctx context.Context, input CreateInput) (*domain.Pi
 		Colour:    input.Colour,
 	}
 
-	if err := uc.repo.Create(ctx, p); err != nil {
+	if err := uc.repo.Create(ctx, pin); err != nil {
 		return nil, fmt.Errorf("create pin: %w", err)
 	}
-	return p, nil
+	return pin, nil
 }
 
 func (uc *UseCase) UpdatePin(ctx context.Context, planID, pinID uuid.UUID, input UpdateInput) (*domain.Pin, error) {
-	p, err := uc.repo.FindByID(ctx, planID, pinID)
+	pin, err := uc.repo.FindByID(ctx, planID, pinID)
 	if err != nil {
 		return nil, err
 	}
 
 	if input.Category != nil {
-		p.Category = *input.Category
+		pin.Category = *input.Category
 	}
 	if input.Colour != nil {
-		p.Colour = *input.Colour
+		pin.Colour = *input.Colour
 	}
 
-	if err := uc.repo.Update(ctx, p); err != nil {
+	if err := uc.repo.Update(ctx, pin); err != nil {
 		return nil, fmt.Errorf("update pin: %w", err)
 	}
-	return p, nil
+	return pin, nil
 }
 
 func (uc *UseCase) DeletePin(ctx context.Context, planID, pinID uuid.UUID) error {

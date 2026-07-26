@@ -24,36 +24,36 @@ type spotResponse struct {
 	Longitude float64 `json:"longitude"`
 }
 
-func toSpotResponse(s *spot.Spot) spotResponse {
+func toSpotResponse(spotItem *spot.Spot) spotResponse {
 	return spotResponse{
-		PlaceID:   s.PlaceID.String(),
-		Name:      s.Name,
-		Address:   s.Address,
-		Latitude:  s.Location.Latitude,
-		Longitude: s.Location.Longitude,
+		PlaceID:   spotItem.PlaceID.String(),
+		Name:      spotItem.Name,
+		Address:   spotItem.Address,
+		Latitude:  spotItem.Location.Latitude,
+		Longitude: spotItem.Location.Longitude,
 	}
 }
 
-func (h *SpotHandler) Search(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("query")
+func (sh *SpotHandler) Search(rw http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query().Get("query")
 	if query == "" {
-		writeError(w, http.StatusBadRequest, "query parameter is required")
+		writeError(rw, http.StatusBadRequest, "query parameter is required")
 		return
 	}
 
-	spots, err := h.uc.SearchSpots(r.Context(), query)
+	spots, err := sh.uc.SearchSpots(req.Context(), query)
 	if errors.Is(err, spot.ErrInvalidQuery) {
-		writeError(w, http.StatusBadRequest, "query parameter is required")
+		writeError(rw, http.StatusBadRequest, "query parameter is required")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
 	resp := make([]spotResponse, 0, len(spots))
-	for _, s := range spots {
-		resp = append(resp, toSpotResponse(s))
+	for _, spotItem := range spots {
+		resp = append(resp, toSpotResponse(spotItem))
 	}
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(rw, http.StatusOK, resp)
 }

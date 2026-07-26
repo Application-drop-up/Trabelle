@@ -19,8 +19,8 @@ const (
 	CategoryOther       Category = "other"
 )
 
-func (c Category) IsValid() bool {
-	switch c {
+func (cat Category) IsValid() bool {
+	switch cat {
 	case CategoryRestaurant, CategoryHotel, CategorySightseeing, CategoryTransport, CategoryOther:
 		return true
 	}

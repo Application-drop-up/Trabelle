@@ -46,142 +46,142 @@ type pinResponse struct {
 	UpdatedAt string  `json:"updated_at"`
 }
 
-func toPinResponse(p *domain.Pin) pinResponse {
+func toPinResponse(pin *domain.Pin) pinResponse {
 	return pinResponse{
-		ID:        p.ID.String(),
-		PlanID:    p.PlanID.String(),
-		Name:      p.Name,
-		Latitude:  p.Latitude,
-		Longitude: p.Longitude,
-		Category:  string(p.Category),
-		Colour:    p.Colour,
-		CreatedAt: p.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: p.UpdatedAt.UTC().Format(time.RFC3339),
+		ID:        pin.ID.String(),
+		PlanID:    pin.PlanID.String(),
+		Name:      pin.Name,
+		Latitude:  pin.Latitude,
+		Longitude: pin.Longitude,
+		Category:  string(pin.Category),
+		Colour:    pin.Colour,
+		CreatedAt: pin.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: pin.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 
-func (h *PinHandler) List(w http.ResponseWriter, r *http.Request) {
-	planID, err := uuid.Parse(chi.URLParam(r, "plan_id"))
+func (ph *PinHandler) List(rw http.ResponseWriter, req *http.Request) {
+	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid plan_id")
+		writeError(rw, http.StatusBadRequest, "invalid plan_id")
 		return
 	}
 
-	pins, err := h.uc.ListPins(r.Context(), planID)
+	pins, err := ph.uc.ListPins(req.Context(), planID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
 	resp := make([]pinResponse, 0, len(pins))
-	for _, p := range pins {
-		resp = append(resp, toPinResponse(p))
+	for _, pin := range pins {
+		resp = append(resp, toPinResponse(pin))
 	}
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(rw, http.StatusOK, resp)
 }
 
-func (h *PinHandler) Create(w http.ResponseWriter, r *http.Request) {
-	planID, err := uuid.Parse(chi.URLParam(r, "plan_id"))
+func (ph *PinHandler) Create(rw http.ResponseWriter, req *http.Request) {
+	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid plan_id")
+		writeError(rw, http.StatusBadRequest, "invalid plan_id")
 		return
 	}
 
-	var req createPinRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+	var body createPinRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	cat := domain.Category(req.Category)
-	if req.Name == "" || req.Colour == "" || !cat.IsValid() {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+	cat := domain.Category(body.Category)
+	if body.Name == "" || body.Colour == "" || !cat.IsValid() {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	p, err := h.uc.CreatePin(r.Context(), pinuc.CreateInput{
+	pin, err := ph.uc.CreatePin(req.Context(), pinuc.CreateInput{
 		PlanID:    planID,
-		Name:      req.Name,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
+		Name:      body.Name,
+		Latitude:  body.Latitude,
+		Longitude: body.Longitude,
 		Category:  cat,
-		Colour:    req.Colour,
+		Colour:    body.Colour,
 	})
 	if errors.Is(err, plandomain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "plan not found")
+		writeError(rw, http.StatusNotFound, "plan not found")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toPinResponse(p))
+	writeJSON(rw, http.StatusCreated, toPinResponse(pin))
 }
 
-func (h *PinHandler) Update(w http.ResponseWriter, r *http.Request) {
-	planID, err := uuid.Parse(chi.URLParam(r, "plan_id"))
+func (ph *PinHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid plan_id")
+		writeError(rw, http.StatusBadRequest, "invalid plan_id")
 		return
 	}
-	pinID, err := uuid.Parse(chi.URLParam(r, "pin_id"))
+	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid pin_id")
+		writeError(rw, http.StatusBadRequest, "invalid pin_id")
 		return
 	}
 
-	var req updatePinRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+	var body updatePinRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	input := pinuc.UpdateInput{}
-	if req.Category != nil {
-		cat := domain.Category(*req.Category)
+	if body.Category != nil {
+		cat := domain.Category(*body.Category)
 		if !cat.IsValid() {
-			writeError(w, http.StatusBadRequest, "invalid category")
+			writeError(rw, http.StatusBadRequest, "invalid category")
 			return
 		}
 		input.Category = &cat
 	}
-	if req.Colour != nil {
-		input.Colour = req.Colour
+	if body.Colour != nil {
+		input.Colour = body.Colour
 	}
 
-	p, err := h.uc.UpdatePin(r.Context(), planID, pinID, input)
+	pin, err := ph.uc.UpdatePin(req.Context(), planID, pinID, input)
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "pin not found")
+		writeError(rw, http.StatusNotFound, "pin not found")
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toPinResponse(p))
+	writeJSON(rw, http.StatusOK, toPinResponse(pin))
 }
 
-func (h *PinHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	planID, err := uuid.Parse(chi.URLParam(r, "plan_id"))
+func (ph *PinHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid plan_id")
+		writeError(rw, http.StatusBadRequest, "invalid plan_id")
 		return
 	}
-	pinID, err := uuid.Parse(chi.URLParam(r, "pin_id"))
+	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid pin_id")
+		writeError(rw, http.StatusBadRequest, "invalid pin_id")
 		return
 	}
 
-	if err := h.uc.DeletePin(r.Context(), planID, pinID); errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "pin not found")
+	if err := ph.uc.DeletePin(req.Context(), planID, pinID); errors.Is(err, domain.ErrNotFound) {
+		writeError(rw, http.StatusNotFound, "pin not found")
 		return
 	} else if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	rw.WriteHeader(http.StatusNoContent)
 }
