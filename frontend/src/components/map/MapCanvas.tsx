@@ -41,14 +41,25 @@ export default function MapCanvas({ adapter, center, zoom, markers, onMarkerClic
   useEffect(() => {
     if (!ready) return;
     const currentIds = new Set(markers.map((m) => m.id));
+    let changed = false;
+
     for (const id of prevMarkerIds.current) {
-      if (!currentIds.has(id)) adapter.removeMarker(id);
+      if (!currentIds.has(id)) {
+        adapter.removeMarker(id);
+        changed = true;
+      }
     }
     for (const marker of markers) {
-      if (!prevMarkerIds.current.has(marker.id)) adapter.addMarker(marker);
+      if (!prevMarkerIds.current.has(marker.id)) {
+        adapter.addMarker(marker);
+        changed = true;
+      }
     }
     prevMarkerIds.current = currentIds;
-    adapter.fitToMarkers(markers);
+
+    if (changed) {
+      adapter.fitToMarkers(markers);
+    }
   }, [ready, markers, adapter]);
 
   return <div ref={containerRef} className="h-full w-full" />;
