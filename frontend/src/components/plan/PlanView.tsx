@@ -19,7 +19,7 @@ export function PlanView({ shareToken }: Props) {
     onDeleteNote,
   } = usePlanContainer(shareToken);
 
-  if (loading) {
+  if (loading && !planVM) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="text-sm text-zinc-500">読み込み中...</p>
