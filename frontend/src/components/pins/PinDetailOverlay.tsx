@@ -40,12 +40,12 @@ export function PinDetailOverlay({ planId, pin, onUpdated, onDelete, onClose }: 
   return (
     <div className="absolute bottom-4 left-1/2 z-10 w-72 -translate-x-1/2 rounded-xl bg-white p-4 shadow-lg">
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <span
             className="mt-0.5 h-3 w-3 flex-shrink-0 rounded-full"
             style={{ backgroundColor: isEditing ? colour : pin.colour }}
           />
-          <span className="text-sm font-medium text-black">{pin.name}</span>
+          <span className="break-words text-sm font-medium text-black">{pin.name}</span>
         </div>
         <button
           type="button"
