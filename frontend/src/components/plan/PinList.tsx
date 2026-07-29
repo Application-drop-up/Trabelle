@@ -75,7 +75,9 @@ function PinListItem({
           className="h-3 w-3 flex-shrink-0 rounded-full"
           style={{ backgroundColor: pin.colour }}
         />
-        <span className="flex-1 text-sm font-medium text-zinc-900">{pin.name}</span>
+        <span className="min-w-0 flex-1 break-words text-sm font-medium text-zinc-900">
+          {pin.name}
+        </span>
         <span className="text-xs text-zinc-400">{PIN_CATEGORY_LABELS[pin.category]}</span>
         <svg
           className={`h-4 w-4 flex-shrink-0 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
