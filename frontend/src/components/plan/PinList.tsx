@@ -194,8 +194,8 @@ function NoteRow({ pinId, note, onUpdateNote, onDeleteNote }: NoteRowProps) {
   }
 
   return (
-    <li className="flex items-start justify-between gap-2 text-sm text-zinc-700">
-      <span className="flex-1">{note.content}</span>
+    <li className="flex min-w-0 items-start justify-between gap-2 text-sm text-zinc-700">
+      <span className="min-w-0 flex-1 break-words">{note.content}</span>
       <div className="flex flex-shrink-0 gap-2">
         <button
           type="button"
