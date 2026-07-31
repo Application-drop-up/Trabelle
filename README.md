@@ -32,10 +32,10 @@ This app is designed to solve specific pain points for three different types of 
 ## 📅 Roadmap
 
 ### MVP
-- [ ] Spot auto-complete (Google Places API)
-- [ ] Categorized pin management (Color-coded for breakfast, dinner, etc.)
-- [ ] Notes linked to specific spots
-- [ ] Read-only URL sharing feature
+- [x] Spot auto-complete (Google Places API)
+- [x] Categorized pin management (Color-coded for breakfast, dinner, etc.)
+- [x] Notes linked to specific spots
+- [x] Read-only URL sharing feature
 
 ### v2
 - [ ] User authentication & registration
