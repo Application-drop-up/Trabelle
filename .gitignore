@@ -2,3 +2,8 @@
 *.exe
 *.test
 vendor/
+
+node_modules/
+.idea/
+.claude/settings.local.json
+PROGRESS.md
