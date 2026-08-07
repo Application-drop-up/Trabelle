@@ -38,20 +38,6 @@ func (repo *UserRepository) Create(ctx context.Context, user *domain.User) error
 	return nil
 }
 
-func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := `SELECT id, email, password_hash, name, created_at, updated_at FROM users WHERE email = $1`
-	user := &domain.User{}
-	err := repo.db.QueryRowContext(ctx, query, email).
-		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt, &user.UpdatedAt)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, domain.ErrNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("find user by email: %w", err)
-	}
-	return user, nil
-}
-
 func (repo *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	query := `SELECT id, email, password_hash, name, created_at, updated_at FROM users WHERE id = $1`
 	user := &domain.User{}
