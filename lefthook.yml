@@ -2,19 +2,19 @@ pre-commit:
   parallel: true
   jobs:
     - name: frontend-lint
-      # oxlint: Rust製で高速なため、pre-commitでの即時フィードバックに採用
+      # oxlint: Rust-based and fast, so it comes first for immediate pre-commit feedback
       root: frontend/
       glob: "*.{js,ts,jsx,tsx}"
       run: npm run lint:ox
 
     - name: frontend-format
-      # Prettier(format:check): フォーマット崩れをコミット前に検知し、レビュー時の差分ノイズを減らす
+      # Prettier (format:check): catch formatting drift before it's committed
       root: frontend/
       glob: "*.{js,ts,jsx,tsx,css}"
       run: npm run format:check
 
     - name: backend-lint
-      # golangci-lint: 複数のGo linterを束ねて実行し、CI相当のチェックをローカルでも再現するためDocker経由で実行
+      # golangci-lint: bundles multiple Go linters, run via Docker to mirror the same checks as CI
       root: backend/
       glob: "*.go"
       run: docker compose -f ../infra/docker-compose.yml run --no-deps --rm go-lint golangci-lint run ./...
@@ -22,5 +22,5 @@ pre-commit:
 commit-msg:
   jobs:
     - name: commitlint
-      # commitlint: Conventional Commits形式を強制し、コミット履歴からの変更履歴生成・可読性を担保
+      # commitlint: keep commit messages consistent
       run: npx commitlint --edit {1}
