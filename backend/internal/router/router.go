@@ -10,6 +10,7 @@ import (
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
 	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
 	spotuc "github.com/Application-drop-up/Travellle/internal/usecase/spot"
+	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -26,6 +27,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 	pinHandler := handler.NewPinHandler(pinUC)
 	noteHandler := handler.NewNoteHandler(noteUC)
 	spotHandler := handler.NewSpotHandler(spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey)))
+	authHandler := handler.NewAuthHandler(useruc.New(persistence.NewUserRepository(db)))
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
@@ -53,6 +55,10 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 	mux.Post("/plans/{plan_id}/pins/{pin_id}/notes", noteHandler.Create)
 	mux.Patch("/plans/{plan_id}/pins/{pin_id}/notes/{note_id}", noteHandler.Update)
 	mux.Delete("/plans/{plan_id}/pins/{pin_id}/notes/{note_id}", noteHandler.Delete)
+
+	mux.Route("/api/v1", func(r chi.Router) {
+		r.Post("/user/register", authHandler.Register)
+	})
 
 	return mux
 }
