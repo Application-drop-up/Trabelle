@@ -1,0 +1,29 @@
+"use client";
+
+import { useCallback, useState } from "react";
+
+import { apiClient } from "@/lib/apiClient";
+import type { RegisterUserInput, User } from "@/domain/user/types";
+
+export function useUser() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const registerUser = useCallback(async (input: RegisterUserInput): Promise<User | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.post<User>("/api/v1/user/register", input);
+      setUser(result);
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to register user");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { user, setUser, loading, error, registerUser };
+}
