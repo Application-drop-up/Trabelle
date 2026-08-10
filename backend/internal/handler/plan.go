@@ -14,13 +14,13 @@ import (
 )
 
 type PlanHandler struct {
-	uc     *planuc.UseCase
-	pinUC  *pinuc.UseCase
-	noteUC *noteuc.UseCase
+	planUseCase *planuc.UseCase
+	pinUseCase  *pinuc.UseCase
+	noteUseCase *noteuc.UseCase
 }
 
-func NewPlanHandler(uc *planuc.UseCase, pinUC *pinuc.UseCase, noteUC *noteuc.UseCase) *PlanHandler {
-	return &PlanHandler{uc: uc, pinUC: pinUC, noteUC: noteUC}
+func NewPlanHandler(planUseCase *planuc.UseCase, pinUseCase *pinuc.UseCase, noteUseCase *noteuc.UseCase) *PlanHandler {
+	return &PlanHandler{planUseCase: planUseCase, pinUseCase: pinUseCase, noteUseCase: noteUseCase}
 }
 
 type createPlanRequest struct {
@@ -52,14 +52,14 @@ func toPlanResponse(plan *domain.Plan, pins []pinWithNotes) planResponse {
 	}
 }
 
-func (ph *PlanHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (planHandler *PlanHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	var body createPlanRequest
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil || body.Title == "" {
 		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	plan, err := ph.uc.CreatePlan(req.Context(), body.Title)
+	plan, err := planHandler.planUseCase.CreatePlan(req.Context(), body.Title)
 	if err != nil {
 		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
@@ -68,11 +68,11 @@ func (ph *PlanHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	writeJSON(rw, http.StatusCreated, toPlanResponse(plan, []pinWithNotes{}))
 }
 
-func (ph *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *http.Request) {
+func (planHandler *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *http.Request) {
 	token := chi.URLParam(req, "share_token")
 	ctx := req.Context()
 
-	plan, err := ph.uc.GetPlanByShareToken(ctx, token)
+	plan, err := planHandler.planUseCase.GetPlanByShareToken(ctx, token)
 	if errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "plan not found")
 		return
@@ -82,7 +82,7 @@ func (ph *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	rawPins, err := ph.pinUC.ListPins(ctx, plan.ID)
+	rawPins, err := planHandler.pinUseCase.ListPins(ctx, plan.ID)
 	if err != nil {
 		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
@@ -90,7 +90,7 @@ func (ph *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *http.Request
 
 	pins := make([]pinWithNotes, 0, len(rawPins))
 	for _, pin := range rawPins {
-		rawNotes, err := ph.noteUC.ListNotes(ctx, pin.ID)
+		rawNotes, err := planHandler.noteUseCase.ListNotes(ctx, pin.ID)
 		if err != nil {
 			writeError(rw, http.StatusInternalServerError, "internal server error")
 			return

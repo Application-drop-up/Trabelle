@@ -15,12 +15,12 @@ func New(searcher spot.Searcher) *UseCase {
 	return &UseCase{searcher: searcher}
 }
 
-func (uc *UseCase) SearchSpots(ctx context.Context, query string) ([]*spot.Spot, error) {
+func (useCase *UseCase) SearchSpots(ctx context.Context, query string) ([]*spot.Spot, error) {
 	if query == "" {
 		return nil, spot.ErrInvalidQuery
 	}
 
-	spots, err := uc.searcher.Search(ctx, query)
+	spots, err := useCase.searcher.Search(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("search spots: %w", err)
 	}
