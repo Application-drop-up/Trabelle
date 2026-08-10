@@ -61,6 +61,10 @@ func (ah *AuthHandler) Register(rw http.ResponseWriter, req *http.Request) {
 		writeError(rw, http.StatusConflict, "email already taken")
 		return
 	}
+	if errors.Is(err, domain.ErrInvalidEmail) || errors.Is(err, domain.ErrPasswordTooShort) {
+		writeError(rw, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err != nil {
 		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
