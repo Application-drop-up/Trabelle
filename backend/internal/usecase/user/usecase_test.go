@@ -13,8 +13,10 @@ import (
 
 // mockRepository は domain.Repository のテスト用実装
 type mockRepository struct {
-	createErr    error
-	createdUsers []*domain.User
+	createErr      error
+	createdUsers   []*domain.User
+	existingByMail *domain.User
+	findByEmailErr error
 }
 
 func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
@@ -26,6 +28,16 @@ func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
 }
 
 func (m *mockRepository) FindByID(_ context.Context, _ uuid.UUID) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockRepository) FindByEmail(_ context.Context, _ string) (*domain.User, error) {
+	if m.existingByMail != nil {
+		return m.existingByMail, nil
+	}
+	if m.findByEmailErr != nil {
+		return nil, m.findByEmailErr
+	}
 	return nil, domain.ErrNotFound
 }
 
@@ -86,6 +98,63 @@ func TestUseCase_Register(t *testing.T) {
 		_, err := useCase.Register(context.Background(), command)
 		if err == nil {
 			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("returns ErrInvalidEmail for a malformed email", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := userUseCase.New(repo)
+
+		command := userUseCase.RegisterCommand{
+			Email:    "not-an-email",
+			Password: "password123",
+			Name:     "Taro",
+		}
+
+		_, err := useCase.Register(context.Background(), command)
+		if !errors.Is(err, domain.ErrInvalidEmail) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidEmail)
+		}
+	})
+
+	t.Run("returns ErrPasswordTooShort for a short password", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := userUseCase.New(repo)
+
+		command := userUseCase.RegisterCommand{
+			Email:    "taro@example.com",
+			Password: "short",
+			Name:     "Taro",
+		}
+
+		_, err := useCase.Register(context.Background(), command)
+		if !errors.Is(err, domain.ErrPasswordTooShort) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrPasswordTooShort)
+		}
+	})
+
+	t.Run("returns ErrEmailTaken when the email is already registered", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{existingByMail: &domain.User{Email: "taro@example.com"}}
+		useCase := userUseCase.New(repo)
+
+		command := userUseCase.RegisterCommand{
+			Email:    "taro@example.com",
+			Password: "password123",
+			Name:     "Taro",
+		}
+
+		_, err := useCase.Register(context.Background(), command)
+		if !errors.Is(err, domain.ErrEmailTaken) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrEmailTaken)
+		}
+		if len(repo.createdUsers) != 0 {
+			t.Error("Create should not be called when email is taken")
 		}
 	})
 }

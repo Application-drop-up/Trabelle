@@ -11,11 +11,11 @@ import (
 )
 
 type AuthHandler struct {
-	uc *useruc.UseCase
+	useCase *useruc.UseCase
 }
 
-func NewAuthHandler(uc *useruc.UseCase) *AuthHandler {
-	return &AuthHandler{uc: uc}
+func NewAuthHandler(useCase *useruc.UseCase) *AuthHandler {
+	return &AuthHandler{useCase: useCase}
 }
 
 type registerRequest struct {
@@ -40,7 +40,7 @@ func toUserResponse(dto *useruc.UserDto) userResponse {
 	}
 }
 
-func (ah *AuthHandler) Register(rw http.ResponseWriter, req *http.Request) {
+func (authHandler *AuthHandler) Register(rw http.ResponseWriter, req *http.Request) {
 	var body registerRequest
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid request body")
@@ -52,13 +52,17 @@ func (ah *AuthHandler) Register(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	dto, err := ah.uc.Register(req.Context(), useruc.RegisterCommand{
+	dto, err := authHandler.useCase.Register(req.Context(), useruc.RegisterCommand{
 		Email:    body.Email,
 		Password: body.Password,
 		Name:     body.Name,
 	})
 	if errors.Is(err, domain.ErrEmailTaken) {
 		writeError(rw, http.StatusConflict, "email already taken")
+		return
+	}
+	if errors.Is(err, domain.ErrInvalidEmail) || errors.Is(err, domain.ErrPasswordTooShort) {
+		writeError(rw, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err != nil {

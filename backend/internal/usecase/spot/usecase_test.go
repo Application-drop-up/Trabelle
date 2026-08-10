@@ -68,8 +68,8 @@ func TestUseCase_SearchSpots(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			uc := spotuc.New(&mockSearcher{spots: tt.mockSpots, err: tt.mockErr})
-			got, err := uc.SearchSpots(context.Background(), tt.query)
+			useCase := spotuc.New(&mockSearcher{spots: tt.mockSpots, err: tt.mockErr})
+			got, err := useCase.SearchSpots(context.Background(), tt.query)
 
 			if tt.wantErr != nil {
 				if err == nil {

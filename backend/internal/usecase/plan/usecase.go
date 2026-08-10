@@ -18,7 +18,7 @@ func New(repo domain.Repository) *UseCase {
 	return &UseCase{repo: repo}
 }
 
-func (uc *UseCase) CreatePlan(ctx context.Context, title string) (*domain.Plan, error) {
+func (useCase *UseCase) CreatePlan(ctx context.Context, title string) (*domain.Plan, error) {
 	token, err := generateShareToken()
 	if err != nil {
 		return nil, fmt.Errorf("generate share token: %w", err)
@@ -30,14 +30,14 @@ func (uc *UseCase) CreatePlan(ctx context.Context, title string) (*domain.Plan, 
 		ShareToken: token,
 	}
 
-	if err := uc.repo.Create(ctx, plan); err != nil {
+	if err := useCase.repo.Create(ctx, plan); err != nil {
 		return nil, fmt.Errorf("create plan: %w", err)
 	}
 	return plan, nil
 }
 
-func (uc *UseCase) GetPlanByShareToken(ctx context.Context, token string) (*domain.Plan, error) {
-	return uc.repo.FindByShareToken(ctx, token)
+func (useCase *UseCase) GetPlanByShareToken(ctx context.Context, token string) (*domain.Plan, error) {
+	return useCase.repo.FindByShareToken(ctx, token)
 }
 
 func generateShareToken() (string, error) {

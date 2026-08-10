@@ -2,11 +2,11 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	domain "github.com/Application-drop-up/Travellle/internal/domain/user"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UseCase struct {
@@ -23,20 +23,33 @@ type RegisterCommand struct {
 	Name     string
 }
 
-func (useCase *UseCase) Register(context context.Context, command RegisterCommand) (*UserDto, error) {
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(command.Password), bcrypt.DefaultCost)
+func (useCase *UseCase) Register(ctx context.Context, command RegisterCommand) (*UserDto, error) {
+	email, err := domain.NewEmail(command.Email)
 	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+		return nil, err
+	}
+
+	password, err := domain.NewPassword(command.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = useCase.repo.FindByEmail(ctx, email.String())
+	if err == nil {
+		return nil, domain.ErrEmailTaken
+	}
+	if !errors.Is(err, domain.ErrNotFound) {
+		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
 	user := &domain.User{
 		ID:           uuid.New(),
-		Email:        command.Email,
-		PasswordHash: string(passwordHash),
+		Email:        email.String(),
+		PasswordHash: password.Hash(),
 		Name:         command.Name,
 	}
 
-	if err := useCase.repo.Create(context, user); err != nil {
+	if err := useCase.repo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 	return NewUserDto(user), nil

@@ -14,11 +14,11 @@ import (
 )
 
 type PinHandler struct {
-	uc *pinuc.UseCase
+	useCase *pinuc.UseCase
 }
 
-func NewPinHandler(uc *pinuc.UseCase) *PinHandler {
-	return &PinHandler{uc: uc}
+func NewPinHandler(useCase *pinuc.UseCase) *PinHandler {
+	return &PinHandler{useCase: useCase}
 }
 
 type createPinRequest struct {
@@ -60,14 +60,14 @@ func toPinResponse(pin *domain.Pin) pinResponse {
 	}
 }
 
-func (ph *PinHandler) List(rw http.ResponseWriter, req *http.Request) {
+func (pinHandler *PinHandler) List(rw http.ResponseWriter, req *http.Request) {
 	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid plan_id")
 		return
 	}
 
-	pins, err := ph.uc.ListPins(req.Context(), planID)
+	pins, err := pinHandler.useCase.ListPins(req.Context(), planID)
 	if err != nil {
 		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
@@ -80,7 +80,7 @@ func (ph *PinHandler) List(rw http.ResponseWriter, req *http.Request) {
 	writeJSON(rw, http.StatusOK, resp)
 }
 
-func (ph *PinHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (pinHandler *PinHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid plan_id")
@@ -99,7 +99,7 @@ func (ph *PinHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pin, err := ph.uc.CreatePin(req.Context(), pinuc.CreateInput{
+	pin, err := pinHandler.useCase.CreatePin(req.Context(), pinuc.CreateInput{
 		PlanID:    planID,
 		Name:      body.Name,
 		Latitude:  body.Latitude,
@@ -119,7 +119,7 @@ func (ph *PinHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	writeJSON(rw, http.StatusCreated, toPinResponse(pin))
 }
 
-func (ph *PinHandler) Update(rw http.ResponseWriter, req *http.Request) {
+func (pinHandler *PinHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid plan_id")
@@ -150,7 +150,7 @@ func (ph *PinHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		input.Colour = body.Colour
 	}
 
-	pin, err := ph.uc.UpdatePin(req.Context(), planID, pinID, input)
+	pin, err := pinHandler.useCase.UpdatePin(req.Context(), planID, pinID, input)
 	if errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "pin not found")
 		return
@@ -163,7 +163,7 @@ func (ph *PinHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	writeJSON(rw, http.StatusOK, toPinResponse(pin))
 }
 
-func (ph *PinHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+func (pinHandler *PinHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	planID, err := uuid.Parse(chi.URLParam(req, "plan_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid plan_id")
@@ -175,7 +175,7 @@ func (ph *PinHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := ph.uc.DeletePin(req.Context(), planID, pinID); errors.Is(err, domain.ErrNotFound) {
+	if err := pinHandler.useCase.DeletePin(req.Context(), planID, pinID); errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "pin not found")
 		return
 	} else if err != nil {

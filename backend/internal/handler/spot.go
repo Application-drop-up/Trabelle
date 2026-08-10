@@ -9,11 +9,11 @@ import (
 )
 
 type SpotHandler struct {
-	uc *spotuc.UseCase
+	useCase *spotuc.UseCase
 }
 
-func NewSpotHandler(uc *spotuc.UseCase) *SpotHandler {
-	return &SpotHandler{uc: uc}
+func NewSpotHandler(useCase *spotuc.UseCase) *SpotHandler {
+	return &SpotHandler{useCase: useCase}
 }
 
 type spotResponse struct {
@@ -34,14 +34,14 @@ func toSpotResponse(spotItem *spot.Spot) spotResponse {
 	}
 }
 
-func (sh *SpotHandler) Search(rw http.ResponseWriter, req *http.Request) {
+func (spotHandler *SpotHandler) Search(rw http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query().Get("query")
 	if query == "" {
 		writeError(rw, http.StatusBadRequest, "query parameter is required")
 		return
 	}
 
-	spots, err := sh.uc.SearchSpots(req.Context(), query)
+	spots, err := spotHandler.useCase.SearchSpots(req.Context(), query)
 	if errors.Is(err, spot.ErrInvalidQuery) {
 		writeError(rw, http.StatusBadRequest, "query parameter is required")
 		return

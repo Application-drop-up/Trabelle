@@ -20,12 +20,12 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
-	pinUC := pinuc.New(pinRepo)
-	noteUC := noteuc.New(noteRepo)
+	pinUseCase := pinuc.New(pinRepo)
+	noteUseCase := noteuc.New(noteRepo)
 
-	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUC, noteUC)
-	pinHandler := handler.NewPinHandler(pinUC)
-	noteHandler := handler.NewNoteHandler(noteUC)
+	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase)
+	pinHandler := handler.NewPinHandler(pinUseCase)
+	noteHandler := handler.NewNoteHandler(noteUseCase)
 	spotHandler := handler.NewSpotHandler(spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey)))
 	authHandler := handler.NewAuthHandler(useruc.New(persistence.NewUserRepository(db)))
 
