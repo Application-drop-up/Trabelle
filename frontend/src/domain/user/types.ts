@@ -13,4 +13,5 @@ export interface RegisterUserInput {
 
 export interface UpdateUserInput {
   name: string;
+  email: string;
 }
