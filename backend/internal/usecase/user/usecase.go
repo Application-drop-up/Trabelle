@@ -54,3 +54,11 @@ func (useCase *UseCase) Register(ctx context.Context, command RegisterCommand) (
 	}
 	return NewUserDto(user), nil
 }
+
+func (useCase *UseCase) GetUserByID(ctx context.Context, id uuid.UUID) (*UserDto, error) {
+	user, err := useCase.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return NewUserDto(user), nil
+}
