@@ -26,6 +26,10 @@ type registerRequest struct {
 	Name     string `json:"name"`
 }
 
+type updateRequest struct {
+	Name string `json:"name"`
+}
+
 type userResponse struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`
@@ -83,6 +87,37 @@ func (authHandler *AuthHandler) GetByID(rw http.ResponseWriter, req *http.Reques
 	}
 
 	dto, err := authHandler.useCase.GetUserByID(req.Context(), id)
+	if errors.Is(err, domain.ErrNotFound) {
+		writeError(rw, http.StatusNotFound, "user not found")
+		return
+	}
+	if err != nil {
+		writeError(rw, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(rw, http.StatusOK, toUserResponse(dto))
+}
+
+func (authHandler *AuthHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(req, "id"))
+	if err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	var body updateRequest
+	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if body.Name == "" {
+		writeError(rw, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	dto, err := authHandler.useCase.UpdateUser(req.Context(), id, useruc.UpdateCommand{Name: body.Name})
 	if errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "user not found")
 		return
