@@ -17,6 +17,8 @@ type mockRepository struct {
 	createdUsers   []*domain.User
 	existingByMail *domain.User
 	findByEmailErr error
+	existingByID   *domain.User
+	findByIDErr    error
 }
 
 func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
@@ -28,6 +30,12 @@ func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
 }
 
 func (m *mockRepository) FindByID(_ context.Context, _ uuid.UUID) (*domain.User, error) {
+	if m.existingByID != nil {
+		return m.existingByID, nil
+	}
+	if m.findByIDErr != nil {
+		return nil, m.findByIDErr
+	}
 	return nil, domain.ErrNotFound
 }
 
@@ -155,6 +163,45 @@ func TestUseCase_Register(t *testing.T) {
 		}
 		if len(repo.createdUsers) != 0 {
 			t.Error("Create should not be called when email is taken")
+		}
+	})
+}
+
+func TestUseCase_GetUserByID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns dto when user exists", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{existingByID: &domain.User{
+			ID:    id,
+			Email: "taro@example.com",
+			Name:  "Taro",
+		}}
+		useCase := userUseCase.New(repo)
+
+		got, err := useCase.GetUserByID(context.Background(), id)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.ID != id {
+			t.Errorf("got ID %v, want %v", got.ID, id)
+		}
+		if got.Email != "taro@example.com" {
+			t.Errorf("got Email %q, want %q", got.Email, "taro@example.com")
+		}
+	})
+
+	t.Run("returns ErrNotFound when user does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := userUseCase.New(repo)
+
+		_, err := useCase.GetUserByID(context.Background(), uuid.New())
+		if !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrNotFound)
 		}
 	})
 }
