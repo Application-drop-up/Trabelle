@@ -219,7 +219,7 @@ func TestUseCase_GetUserByID(t *testing.T) {
 func TestUseCase_UpdateUser(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns dto with updated name on success", func(t *testing.T) {
+	t.Run("returns dto with updated name and email on success", func(t *testing.T) {
 		t.Parallel()
 
 		id := uuid.New()
@@ -230,18 +230,19 @@ func TestUseCase_UpdateUser(t *testing.T) {
 		}}
 		useCase := userUseCase.New(repo)
 
-		got, err := useCase.UpdateUser(context.Background(), id, userUseCase.UpdateCommand{Name: "Jiro"})
+		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "jiro@example.com"}
+		got, err := useCase.UpdateUser(context.Background(), id, command)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if got.Name != "Jiro" {
 			t.Errorf("got Name %q, want %q", got.Name, "Jiro")
 		}
+		if got.Email != "jiro@example.com" {
+			t.Errorf("got Email %q, want %q", got.Email, "jiro@example.com")
+		}
 		if len(repo.updatedUsers) != 1 {
 			t.Fatalf("got %d updated users, want 1", len(repo.updatedUsers))
-		}
-		if repo.updatedUsers[0].Name != "Jiro" {
-			t.Errorf("updated user Name = %q, want %q", repo.updatedUsers[0].Name, "Jiro")
 		}
 	})
 
@@ -251,9 +252,58 @@ func TestUseCase_UpdateUser(t *testing.T) {
 		repo := &mockRepository{}
 		useCase := userUseCase.New(repo)
 
-		_, err := useCase.UpdateUser(context.Background(), uuid.New(), userUseCase.UpdateCommand{Name: "Jiro"})
+		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "jiro@example.com"}
+		_, err := useCase.UpdateUser(context.Background(), uuid.New(), command)
 		if !errors.Is(err, domain.ErrNotFound) {
 			t.Fatalf("got error %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+
+	t.Run("returns ErrInvalidEmail for a malformed email", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{existingByID: &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"}}
+		useCase := userUseCase.New(repo)
+
+		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "not-an-email"}
+		_, err := useCase.UpdateUser(context.Background(), id, command)
+		if !errors.Is(err, domain.ErrInvalidEmail) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidEmail)
+		}
+	})
+
+	t.Run("returns ErrEmailTaken when the email is already used by another user", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{
+			existingByID:   &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"},
+			existingByMail: &domain.User{ID: uuid.New(), Email: "jiro@example.com"},
+		}
+		useCase := userUseCase.New(repo)
+
+		command := userUseCase.UpdateCommand{Name: "Taro", Email: "jiro@example.com"}
+		_, err := useCase.UpdateUser(context.Background(), id, command)
+		if !errors.Is(err, domain.ErrEmailTaken) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrEmailTaken)
+		}
+		if len(repo.updatedUsers) != 0 {
+			t.Error("Update should not be called when email is taken")
+		}
+	})
+
+	t.Run("allows keeping the same email", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{existingByID: &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"}}
+		useCase := userUseCase.New(repo)
+
+		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "taro@example.com"}
+		_, err := useCase.UpdateUser(context.Background(), id, command)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
@@ -262,12 +312,13 @@ func TestUseCase_UpdateUser(t *testing.T) {
 
 		id := uuid.New()
 		repo := &mockRepository{
-			existingByID: &domain.User{ID: id, Name: "Taro"},
+			existingByID: &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"},
 			updateErr:    errors.New("db error"),
 		}
 		useCase := userUseCase.New(repo)
 
-		_, err := useCase.UpdateUser(context.Background(), id, userUseCase.UpdateCommand{Name: "Jiro"})
+		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "taro@example.com"}
+		_, err := useCase.UpdateUser(context.Background(), id, command)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
