@@ -59,6 +59,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 	mux.Route("/api/v1", func(r chi.Router) {
 		r.Post("/user/register", authHandler.Register)
 		r.Get("/user/{id}", authHandler.GetByID)
+		r.Patch("/user/{id}", authHandler.Update)
 	})
 
 	return mux
