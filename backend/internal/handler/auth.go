@@ -8,6 +8,8 @@ import (
 
 	domain "github.com/Application-drop-up/Travellle/internal/domain/user"
 	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type AuthHandler struct {
@@ -71,4 +73,24 @@ func (authHandler *AuthHandler) Register(rw http.ResponseWriter, req *http.Reque
 	}
 
 	writeJSON(rw, http.StatusCreated, toUserResponse(dto))
+}
+
+func (authHandler *AuthHandler) GetByID(rw http.ResponseWriter, req *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(req, "id"))
+	if err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	dto, err := authHandler.useCase.GetUserByID(req.Context(), id)
+	if errors.Is(err, domain.ErrNotFound) {
+		writeError(rw, http.StatusNotFound, "user not found")
+		return
+	}
+	if err != nil {
+		writeError(rw, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(rw, http.StatusOK, toUserResponse(dto))
 }

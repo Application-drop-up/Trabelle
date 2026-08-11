@@ -9,6 +9,7 @@ import (
 
 	"github.com/Application-drop-up/Travellle/internal/router"
 	"github.com/Application-drop-up/Travellle/internal/testutil"
+	"github.com/google/uuid"
 )
 
 type userResponse struct {
@@ -119,6 +120,78 @@ func TestUserHandler_Register(t *testing.T) {
 		second := registerReq(body)
 		if second.Code != http.StatusConflict {
 			t.Errorf("second registration status = %d, want %d, body: %s", second.Code, http.StatusConflict, second.Body.String())
+		}
+	})
+}
+
+func TestUserHandler_GetByID(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.NewTestDB(t)
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+
+	getReq := func(id string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/user/"+id, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		return w
+	}
+
+	t.Run("returns the user when it exists", func(t *testing.T) {
+		t.Parallel()
+
+		registerRaw, _ := json.Marshal(map[string]string{
+			"email":    "getbyid@example.com",
+			"password": "password123",
+			"name":     "GetByID",
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/user/register", bytes.NewReader(registerRaw))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusCreated {
+			t.Fatalf("registration status = %d, want %d, body: %s", w.Code, http.StatusCreated, w.Body.String())
+		}
+		var created userResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM users WHERE id = $1", created.ID) })
+
+		got := getReq(created.ID)
+		if got.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d, body: %s", got.Code, http.StatusOK, got.Body.String())
+		}
+
+		var fetched userResponse
+		if err := json.Unmarshal(got.Body.Bytes(), &fetched); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if fetched.ID != created.ID {
+			t.Errorf("ID = %q, want %q", fetched.ID, created.ID)
+		}
+		if fetched.Email != created.Email {
+			t.Errorf("Email = %q, want %q", fetched.Email, created.Email)
+		}
+	})
+
+	t.Run("returns 404 for an unknown id", func(t *testing.T) {
+		t.Parallel()
+
+		w := getReq(uuid.New().String())
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
+		}
+	})
+
+	t.Run("returns 400 for an invalid id", func(t *testing.T) {
+		t.Parallel()
+
+		w := getReq("not-a-uuid")
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
 		}
 	})
 }
