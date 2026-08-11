@@ -19,6 +19,8 @@ type mockRepository struct {
 	findByEmailErr error
 	existingByID   *domain.User
 	findByIDErr    error
+	updateErr      error
+	updatedUsers   []*domain.User
 }
 
 func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
@@ -47,6 +49,14 @@ func (m *mockRepository) FindByEmail(_ context.Context, _ string) (*domain.User,
 		return nil, m.findByEmailErr
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockRepository) Update(_ context.Context, user *domain.User) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
+	m.updatedUsers = append(m.updatedUsers, user)
+	return nil
 }
 
 func TestUseCase_Register(t *testing.T) {
