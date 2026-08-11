@@ -62,3 +62,21 @@ func (useCase *UseCase) GetUserByID(ctx context.Context, id uuid.UUID) (*UserDto
 	}
 	return NewUserDto(user), nil
 }
+
+type UpdateCommand struct {
+	Name string
+}
+
+func (useCase *UseCase) UpdateUser(ctx context.Context, id uuid.UUID, command UpdateCommand) (*UserDto, error) {
+	user, err := useCase.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Name = command.Name
+
+	if err := useCase.repo.Update(ctx, user); err != nil {
+		return nil, fmt.Errorf("update user: %w", err)
+	}
+	return NewUserDto(user), nil
+}

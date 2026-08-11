@@ -215,3 +215,61 @@ func TestUseCase_GetUserByID(t *testing.T) {
 		}
 	})
 }
+
+func TestUseCase_UpdateUser(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns dto with updated name on success", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{existingByID: &domain.User{
+			ID:    id,
+			Email: "taro@example.com",
+			Name:  "Taro",
+		}}
+		useCase := userUseCase.New(repo)
+
+		got, err := useCase.UpdateUser(context.Background(), id, userUseCase.UpdateCommand{Name: "Jiro"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.Name != "Jiro" {
+			t.Errorf("got Name %q, want %q", got.Name, "Jiro")
+		}
+		if len(repo.updatedUsers) != 1 {
+			t.Fatalf("got %d updated users, want 1", len(repo.updatedUsers))
+		}
+		if repo.updatedUsers[0].Name != "Jiro" {
+			t.Errorf("updated user Name = %q, want %q", repo.updatedUsers[0].Name, "Jiro")
+		}
+	})
+
+	t.Run("returns ErrNotFound when user does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := userUseCase.New(repo)
+
+		_, err := useCase.UpdateUser(context.Background(), uuid.New(), userUseCase.UpdateCommand{Name: "Jiro"})
+		if !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{
+			existingByID: &domain.User{ID: id, Name: "Taro"},
+			updateErr:    errors.New("db error"),
+		}
+		useCase := userUseCase.New(repo)
+
+		_, err := useCase.UpdateUser(context.Background(), id, userUseCase.UpdateCommand{Name: "Jiro"})
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}
