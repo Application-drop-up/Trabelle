@@ -65,3 +65,18 @@ func (repo *UserRepository) FindByEmail(ctx context.Context, email string) (*dom
 	}
 	return user, nil
 }
+
+func (repo *UserRepository) Update(ctx context.Context, user *domain.User) error {
+	query := `
+		UPDATE users SET name = $1, updated_at = NOW()
+		WHERE id = $2
+		RETURNING updated_at`
+	err := repo.db.QueryRowContext(ctx, query, user.Name, user.ID).Scan(&user.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	return nil
+}
