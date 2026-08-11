@@ -10,3 +10,8 @@ export interface RegisterUserInput {
   password: string;
   name: string;
 }
+
+export interface UpdateUserInput {
+  name: string;
+  email: string;
+}
