@@ -61,7 +61,7 @@ func TestUserRepository_Update(t *testing.T) {
 	conn := testutil.NewTestDB(t)
 	repo := persistence.NewUserRepository(conn)
 
-	t.Run("updates the name", func(t *testing.T) {
+	t.Run("updates the name and email", func(t *testing.T) {
 		t.Parallel()
 
 		user := newTestUser()
@@ -71,6 +71,7 @@ func TestUserRepository_Update(t *testing.T) {
 		}
 
 		user.Name = "Jiro"
+		user.Email = uuid.New().String() + "@example.com"
 		if err := repo.Update(context.Background(), user); err != nil {
 			t.Fatalf("Update() unexpected error: %v", err)
 		}
@@ -81,6 +82,9 @@ func TestUserRepository_Update(t *testing.T) {
 		}
 		if got.Name != "Jiro" {
 			t.Errorf("Name = %q, want %q", got.Name, "Jiro")
+		}
+		if got.Email != user.Email {
+			t.Errorf("Email = %q, want %q", got.Email, user.Email)
 		}
 	})
 
@@ -93,6 +97,28 @@ func TestUserRepository_Update(t *testing.T) {
 		err := repo.Update(context.Background(), user)
 		if !errors.Is(err, domain.ErrNotFound) {
 			t.Errorf("Update() error = %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+
+	t.Run("returns ErrEmailTaken when the email is already used by another user", func(t *testing.T) {
+		t.Parallel()
+
+		userA := newTestUser()
+		t.Cleanup(func() { _, _ = conn.Exec("DELETE FROM users WHERE id = $1", userA.ID) })
+		if err := repo.Create(context.Background(), userA); err != nil {
+			t.Fatalf("Create() unexpected error: %v", err)
+		}
+
+		userB := newTestUser()
+		t.Cleanup(func() { _, _ = conn.Exec("DELETE FROM users WHERE id = $1", userB.ID) })
+		if err := repo.Create(context.Background(), userB); err != nil {
+			t.Fatalf("Create() unexpected error: %v", err)
+		}
+
+		userB.Email = userA.Email
+		err := repo.Update(context.Background(), userB)
+		if !errors.Is(err, domain.ErrEmailTaken) {
+			t.Errorf("Update() error = %v, want %v", err, domain.ErrEmailTaken)
 		}
 	})
 }
