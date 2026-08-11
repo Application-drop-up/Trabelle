@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
-import type { RegisterUserInput, User } from "@/domain/user/types";
+import type { RegisterUserInput, UpdateUserInput, User } from "@/domain/user/types";
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -25,5 +25,23 @@ export function useUser() {
     }
   }, []);
 
-  return { user, setUser, loading, error, registerUser };
+  const updateUser = useCallback(
+    async (id: string, input: UpdateUserInput): Promise<User | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await apiClient.patch<User>(`/api/v1/user/${id}`, input);
+        setUser(result);
+        return result;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to update user");
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  return { user, setUser, loading, error, registerUser, updateUser };
 }
