@@ -233,12 +233,12 @@ func TestUserHandler_Update(t *testing.T) {
 		return created
 	}
 
-	t.Run("updates the name", func(t *testing.T) {
+	t.Run("updates the name and email", func(t *testing.T) {
 		t.Parallel()
 
 		created := registerUser(t, "update@example.com")
 
-		w := updateReq(created.ID, map[string]string{"name": "Updated"})
+		w := updateReq(created.ID, map[string]string{"name": "Updated", "email": "updated@example.com"})
 		if w.Code != http.StatusOK {
 			t.Fatalf("status = %d, want %d, body: %s", w.Code, http.StatusOK, w.Body.String())
 		}
@@ -250,23 +250,60 @@ func TestUserHandler_Update(t *testing.T) {
 		if updated.Name != "Updated" {
 			t.Errorf("Name = %q, want %q", updated.Name, "Updated")
 		}
+		if updated.Email != "updated@example.com" {
+			t.Errorf("Email = %q, want %q", updated.Email, "updated@example.com")
+		}
 	})
 
 	t.Run("rejects an empty name", func(t *testing.T) {
 		t.Parallel()
 
-		created := registerUser(t, "update-empty@example.com")
+		created := registerUser(t, "update-empty-name@example.com")
 
-		w := updateReq(created.ID, map[string]string{"name": ""})
+		w := updateReq(created.ID, map[string]string{"name": "", "email": created.Email})
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+		}
+	})
+
+	t.Run("rejects an empty email", func(t *testing.T) {
+		t.Parallel()
+
+		created := registerUser(t, "update-empty-email@example.com")
+
+		w := updateReq(created.ID, map[string]string{"name": "Updated", "email": ""})
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+		}
+	})
+
+	t.Run("rejects an invalid email", func(t *testing.T) {
+		t.Parallel()
+
+		created := registerUser(t, "update-invalid-email@example.com")
+
+		w := updateReq(created.ID, map[string]string{"name": "Updated", "email": "not-an-email"})
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+		}
+	})
+
+	t.Run("returns 409 when the email is already taken", func(t *testing.T) {
+		t.Parallel()
+
+		registerUser(t, "update-taken@example.com")
+		created := registerUser(t, "update-taker@example.com")
+
+		w := updateReq(created.ID, map[string]string{"name": "Updated", "email": "update-taken@example.com"})
+		if w.Code != http.StatusConflict {
+			t.Errorf("status = %d, want %d, body: %s", w.Code, http.StatusConflict, w.Body.String())
 		}
 	})
 
 	t.Run("returns 404 for an unknown id", func(t *testing.T) {
 		t.Parallel()
 
-		w := updateReq(uuid.New().String(), map[string]string{"name": "Updated"})
+		w := updateReq(uuid.New().String(), map[string]string{"name": "Updated", "email": "unknown@example.com"})
 
 		if w.Code != http.StatusNotFound {
 			t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
@@ -276,7 +313,7 @@ func TestUserHandler_Update(t *testing.T) {
 	t.Run("returns 400 for an invalid id", func(t *testing.T) {
 		t.Parallel()
 
-		w := updateReq("not-a-uuid", map[string]string{"name": "Updated"})
+		w := updateReq("not-a-uuid", map[string]string{"name": "Updated", "email": "updated@example.com"})
 
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
