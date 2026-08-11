@@ -11,6 +11,7 @@ const mockInput: RegisterUserInput = {
 
 const mockUpdateInput: UpdateUserInput = {
   name: "Jiro",
+  email: "jiro@example.com",
 };
 
 const mockUser: User = {
@@ -23,6 +24,7 @@ const mockUser: User = {
 const mockUpdatedUser: User = {
   ...mockUser,
   name: "Jiro",
+  email: "jiro@example.com",
 };
 
 beforeEach(() => {
