@@ -21,6 +21,8 @@ type mockRepository struct {
 	findByIDErr    error
 	updateErr      error
 	updatedUsers   []*domain.User
+	deleteErr      error
+	deletedIDs     []uuid.UUID
 }
 
 func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
@@ -56,6 +58,14 @@ func (m *mockRepository) Update(_ context.Context, user *domain.User) error {
 		return m.updateErr
 	}
 	m.updatedUsers = append(m.updatedUsers, user)
+	return nil
+}
+
+func (m *mockRepository) Delete(_ context.Context, id uuid.UUID) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	m.deletedIDs = append(m.deletedIDs, id)
 	return nil
 }
 
