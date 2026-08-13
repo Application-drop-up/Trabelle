@@ -27,7 +27,8 @@ type registerRequest struct {
 }
 
 type updateRequest struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type userResponse struct {
@@ -112,14 +113,25 @@ func (authHandler *AuthHandler) Update(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if body.Name == "" {
+	if body.Name == "" || body.Email == "" {
 		writeError(rw, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	dto, err := authHandler.useCase.UpdateUser(req.Context(), id, useruc.UpdateCommand{Name: body.Name})
+	dto, err := authHandler.useCase.UpdateUser(req.Context(), id, useruc.UpdateCommand{
+		Name:  body.Name,
+		Email: body.Email,
+	})
 	if errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "user not found")
+		return
+	}
+	if errors.Is(err, domain.ErrEmailTaken) {
+		writeError(rw, http.StatusConflict, "email already taken")
+		return
+	}
+	if errors.Is(err, domain.ErrInvalidEmail) {
+		writeError(rw, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err != nil {

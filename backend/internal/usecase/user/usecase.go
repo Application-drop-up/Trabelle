@@ -64,7 +64,8 @@ func (useCase *UseCase) GetUserByID(ctx context.Context, id uuid.UUID) (*UserDto
 }
 
 type UpdateCommand struct {
-	Name string
+	Name  string
+	Email string
 }
 
 func (useCase *UseCase) UpdateUser(ctx context.Context, id uuid.UUID, command UpdateCommand) (*UserDto, error) {
@@ -73,7 +74,23 @@ func (useCase *UseCase) UpdateUser(ctx context.Context, id uuid.UUID, command Up
 		return nil, err
 	}
 
+	email, err := domain.NewEmail(command.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if email.String() != user.Email {
+		existing, err := useCase.repo.FindByEmail(ctx, email.String())
+		if err == nil && existing.ID != id {
+			return nil, domain.ErrEmailTaken
+		}
+		if err != nil && !errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("find user by email: %w", err)
+		}
+	}
+
 	user.Name = command.Name
+	user.Email = email.String()
 
 	if err := useCase.repo.Update(ctx, user); err != nil {
 		return nil, fmt.Errorf("update user: %w", err)
