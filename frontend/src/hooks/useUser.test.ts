@@ -211,4 +211,86 @@ describe("useUser", () => {
       );
     });
   });
+
+  describe("deleteUser", () => {
+    it("returns true and clears user state on success", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.deleteUser(mockUser.id);
+      });
+
+      expect(returned).toBe(true);
+      expect(result.current.user).toBeNull();
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBeNull();
+    });
+
+    it("returns false and sets error state on failure", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        json: async () => ({ error: "user not found" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = true;
+      await act(async () => {
+        returned = await result.current.deleteUser(mockUser.id);
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.error).toBe("user not found");
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("sets loading true while fetching", async () => {
+      let resolveFetch!: (value: unknown) => void;
+      global.fetch = jest.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useUser());
+
+      act(() => {
+        result.current.deleteUser(mockUser.id);
+      });
+
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => {
+        resolveFetch({ ok: true, status: 204 });
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("calls fetch with the correct URL and method", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      await act(async () => {
+        await result.current.deleteUser(mockUser.id);
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining(`/api/v1/user/${mockUser.id}`),
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+  });
 });

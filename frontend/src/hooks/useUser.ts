@@ -43,5 +43,20 @@ export function useUser() {
     [],
   );
 
-  return { user, setUser, loading, error, registerUser, updateUser };
+  const deleteUser = useCallback(async (id: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await apiClient.delete(`/api/v1/user/${id}`);
+      setUser(null);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete user");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { user, setUser, loading, error, registerUser, updateUser, deleteUser };
 }
