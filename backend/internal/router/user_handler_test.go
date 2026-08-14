@@ -320,3 +320,70 @@ func TestUserHandler_Update(t *testing.T) {
 		}
 	})
 }
+
+func TestUserHandler_Delete(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.NewTestDB(t)
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+
+	deleteReq := func(id string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/user/"+id, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		return w
+	}
+
+	t.Run("deletes an existing user", func(t *testing.T) {
+		t.Parallel()
+
+		registerRaw, _ := json.Marshal(map[string]string{
+			"email":    "delete@example.com",
+			"password": "password123",
+			"name":     "Delete",
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/user/register", bytes.NewReader(registerRaw))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusCreated {
+			t.Fatalf("registration status = %d, want %d, body: %s", w.Code, http.StatusCreated, w.Body.String())
+		}
+		var created userResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		got := deleteReq(created.ID)
+		if got.Code != http.StatusNoContent {
+			t.Fatalf("status = %d, want %d, body: %s", got.Code, http.StatusNoContent, got.Body.String())
+		}
+
+		getReq := httptest.NewRequest(http.MethodGet, "/api/v1/user/"+created.ID, nil)
+		getW := httptest.NewRecorder()
+		r.ServeHTTP(getW, getReq)
+		if getW.Code != http.StatusNotFound {
+			t.Errorf("GET after delete status = %d, want %d", getW.Code, http.StatusNotFound)
+		}
+	})
+
+	t.Run("returns 404 for an unknown id", func(t *testing.T) {
+		t.Parallel()
+
+		w := deleteReq(uuid.New().String())
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
+		}
+	})
+
+	t.Run("returns 400 for an invalid id", func(t *testing.T) {
+		t.Parallel()
+
+		w := deleteReq("not-a-uuid")
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+		}
+	})
+}
