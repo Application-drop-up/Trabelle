@@ -141,3 +141,23 @@ func (authHandler *AuthHandler) Update(rw http.ResponseWriter, req *http.Request
 
 	writeJSON(rw, http.StatusOK, toUserResponse(dto))
 }
+
+func (authHandler *AuthHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(req, "id"))
+	if err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	err = authHandler.useCase.DeleteUser(req.Context(), id)
+	if errors.Is(err, domain.ErrNotFound) {
+		writeError(rw, http.StatusNotFound, "user not found")
+		return
+	}
+	if err != nil {
+		writeError(rw, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	rw.WriteHeader(http.StatusNoContent)
+}
