@@ -21,6 +21,8 @@ type mockRepository struct {
 	findByIDErr    error
 	updateErr      error
 	updatedUsers   []*domain.User
+	deleteErr      error
+	deletedIDs     []uuid.UUID
 }
 
 func (m *mockRepository) Create(_ context.Context, user *domain.User) error {
@@ -56,6 +58,14 @@ func (m *mockRepository) Update(_ context.Context, user *domain.User) error {
 		return m.updateErr
 	}
 	m.updatedUsers = append(m.updatedUsers, user)
+	return nil
+}
+
+func (m *mockRepository) Delete(_ context.Context, id uuid.UUID) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	m.deletedIDs = append(m.deletedIDs, id)
 	return nil
 }
 
@@ -321,6 +331,37 @@ func TestUseCase_UpdateUser(t *testing.T) {
 		_, err := useCase.UpdateUser(context.Background(), id, command)
 		if err == nil {
 			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
+func TestUseCase_DeleteUser(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deletes the user on success", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{}
+		useCase := userUseCase.New(repo)
+
+		if err := useCase.DeleteUser(context.Background(), id); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(repo.deletedIDs) != 1 || repo.deletedIDs[0] != id {
+			t.Errorf("deletedIDs = %v, want [%v]", repo.deletedIDs, id)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{deleteErr: domain.ErrNotFound}
+		useCase := userUseCase.New(repo)
+
+		err := useCase.DeleteUser(context.Background(), uuid.New())
+		if !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrNotFound)
 		}
 	})
 }

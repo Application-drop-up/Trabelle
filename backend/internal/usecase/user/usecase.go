@@ -97,3 +97,7 @@ func (useCase *UseCase) UpdateUser(ctx context.Context, id uuid.UUID, command Up
 	}
 	return NewUserDto(user), nil
 }
+
+func (useCase *UseCase) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	return useCase.repo.Delete(ctx, id)
+}

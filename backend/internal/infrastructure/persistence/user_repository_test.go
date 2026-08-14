@@ -122,3 +122,37 @@ func TestUserRepository_Update(t *testing.T) {
 		}
 	})
 }
+
+func TestUserRepository_Delete(t *testing.T) {
+	t.Parallel()
+
+	conn := testutil.NewTestDB(t)
+	repo := persistence.NewUserRepository(conn)
+
+	t.Run("deletes an existing user", func(t *testing.T) {
+		t.Parallel()
+
+		user := newTestUser()
+		if err := repo.Create(context.Background(), user); err != nil {
+			t.Fatalf("Create() unexpected error: %v", err)
+		}
+
+		if err := repo.Delete(context.Background(), user.ID); err != nil {
+			t.Fatalf("Delete() unexpected error: %v", err)
+		}
+
+		_, err := repo.FindByID(context.Background(), user.ID)
+		if !errors.Is(err, domain.ErrNotFound) {
+			t.Errorf("FindByID() after delete error = %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+
+	t.Run("returns ErrNotFound for an unknown id", func(t *testing.T) {
+		t.Parallel()
+
+		err := repo.Delete(context.Background(), uuid.New())
+		if !errors.Is(err, domain.ErrNotFound) {
+			t.Errorf("Delete() error = %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+}
