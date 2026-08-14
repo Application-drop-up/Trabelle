@@ -334,3 +334,34 @@ func TestUseCase_UpdateUser(t *testing.T) {
 		}
 	})
 }
+
+func TestUseCase_DeleteUser(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deletes the user on success", func(t *testing.T) {
+		t.Parallel()
+
+		id := uuid.New()
+		repo := &mockRepository{}
+		useCase := userUseCase.New(repo)
+
+		if err := useCase.DeleteUser(context.Background(), id); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(repo.deletedIDs) != 1 || repo.deletedIDs[0] != id {
+			t.Errorf("deletedIDs = %v, want [%v]", repo.deletedIDs, id)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{deleteErr: domain.ErrNotFound}
+		useCase := userUseCase.New(repo)
+
+		err := useCase.DeleteUser(context.Background(), uuid.New())
+		if !errors.Is(err, domain.ErrNotFound) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+}
