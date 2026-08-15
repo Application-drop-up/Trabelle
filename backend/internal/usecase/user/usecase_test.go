@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	domain "github.com/Application-drop-up/Travellle/internal/domain/user"
 	userUseCase "github.com/Application-drop-up/Travellle/internal/usecase/user"
@@ -69,6 +70,86 @@ func (m *mockRepository) Delete(_ context.Context, id uuid.UUID) error {
 	return nil
 }
 
+// mockSessionRepository は userUseCase.SessionRepository のテスト用実装
+type mockSessionRepository struct {
+	createErr      error
+	createdSession *userUseCase.Session
+}
+
+func (m *mockSessionRepository) Create(_ context.Context, session *userUseCase.Session) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
+	m.createdSession = session
+	return nil
+}
+
+func (m *mockSessionRepository) FindByToken(_ context.Context, _ string) (*userUseCase.Session, error) {
+	return nil, userUseCase.ErrSessionNotFound
+}
+
+func (m *mockSessionRepository) Delete(_ context.Context, _ string) error {
+	return nil
+}
+
+// mockLoginOTPRepository は userUseCase.LoginOTPRepository のテスト用実装
+type mockLoginOTPRepository struct {
+	createErr   error
+	createdOTPs []*userUseCase.OTP
+	existingOTP *userUseCase.OTP
+	findErr     error
+	deleteErr   error
+	deletedIDs  []uuid.UUID
+}
+
+func (m *mockLoginOTPRepository) Create(_ context.Context, otp *userUseCase.OTP) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
+	m.createdOTPs = append(m.createdOTPs, otp)
+	return nil
+}
+
+func (m *mockLoginOTPRepository) FindByUserID(_ context.Context, _ uuid.UUID) (*userUseCase.OTP, error) {
+	if m.existingOTP != nil {
+		return m.existingOTP, nil
+	}
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	return nil, userUseCase.ErrOTPNotFound
+}
+
+func (m *mockLoginOTPRepository) Delete(_ context.Context, id uuid.UUID) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	m.deletedIDs = append(m.deletedIDs, id)
+	return nil
+}
+
+// mockEmailSender は userUseCase.EmailSender のテスト用実装
+type mockEmailSender struct {
+	sendErr  error
+	sentTo   string
+	sentCode string
+}
+
+func (m *mockEmailSender) SendLoginCode(_ context.Context, to, code string) error {
+	if m.sendErr != nil {
+		return m.sendErr
+	}
+	m.sentTo = to
+	m.sentCode = code
+	return nil
+}
+
+// newUseCase builds a UseCase with default (no-op) Session/OTP/Email mocks,
+// for tests that only exercise Register/GetUserByID/UpdateUser/DeleteUser.
+func newUseCase(repo *mockRepository) *userUseCase.UseCase {
+	return userUseCase.New(repo, &mockSessionRepository{}, &mockLoginOTPRepository{}, &mockEmailSender{})
+}
+
 func TestUseCase_Register(t *testing.T) {
 	t.Parallel()
 
@@ -76,7 +157,7 @@ func TestUseCase_Register(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.RegisterCommand{
 			Email:    "taro@example.com",
@@ -115,7 +196,7 @@ func TestUseCase_Register(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{createErr: errors.New("db error")}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.RegisterCommand{
 			Email:    "taro@example.com",
@@ -133,7 +214,7 @@ func TestUseCase_Register(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.RegisterCommand{
 			Email:    "not-an-email",
@@ -151,7 +232,7 @@ func TestUseCase_Register(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.RegisterCommand{
 			Email:    "taro@example.com",
@@ -169,7 +250,7 @@ func TestUseCase_Register(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{existingByMail: &domain.User{Email: "taro@example.com"}}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.RegisterCommand{
 			Email:    "taro@example.com",
@@ -199,7 +280,7 @@ func TestUseCase_GetUserByID(t *testing.T) {
 			Email: "taro@example.com",
 			Name:  "Taro",
 		}}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		got, err := useCase.GetUserByID(context.Background(), id)
 		if err != nil {
@@ -217,7 +298,7 @@ func TestUseCase_GetUserByID(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		_, err := useCase.GetUserByID(context.Background(), uuid.New())
 		if !errors.Is(err, domain.ErrNotFound) {
@@ -238,7 +319,7 @@ func TestUseCase_UpdateUser(t *testing.T) {
 			Email: "taro@example.com",
 			Name:  "Taro",
 		}}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "jiro@example.com"}
 		got, err := useCase.UpdateUser(context.Background(), id, command)
@@ -260,7 +341,7 @@ func TestUseCase_UpdateUser(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "jiro@example.com"}
 		_, err := useCase.UpdateUser(context.Background(), uuid.New(), command)
@@ -274,7 +355,7 @@ func TestUseCase_UpdateUser(t *testing.T) {
 
 		id := uuid.New()
 		repo := &mockRepository{existingByID: &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"}}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "not-an-email"}
 		_, err := useCase.UpdateUser(context.Background(), id, command)
@@ -291,7 +372,7 @@ func TestUseCase_UpdateUser(t *testing.T) {
 			existingByID:   &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"},
 			existingByMail: &domain.User{ID: uuid.New(), Email: "jiro@example.com"},
 		}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.UpdateCommand{Name: "Taro", Email: "jiro@example.com"}
 		_, err := useCase.UpdateUser(context.Background(), id, command)
@@ -308,7 +389,7 @@ func TestUseCase_UpdateUser(t *testing.T) {
 
 		id := uuid.New()
 		repo := &mockRepository{existingByID: &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"}}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "taro@example.com"}
 		_, err := useCase.UpdateUser(context.Background(), id, command)
@@ -325,7 +406,7 @@ func TestUseCase_UpdateUser(t *testing.T) {
 			existingByID: &domain.User{ID: id, Email: "taro@example.com", Name: "Taro"},
 			updateErr:    errors.New("db error"),
 		}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		command := userUseCase.UpdateCommand{Name: "Jiro", Email: "taro@example.com"}
 		_, err := useCase.UpdateUser(context.Background(), id, command)
@@ -343,7 +424,7 @@ func TestUseCase_DeleteUser(t *testing.T) {
 
 		id := uuid.New()
 		repo := &mockRepository{}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		if err := useCase.DeleteUser(context.Background(), id); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -357,11 +438,205 @@ func TestUseCase_DeleteUser(t *testing.T) {
 		t.Parallel()
 
 		repo := &mockRepository{deleteErr: domain.ErrNotFound}
-		useCase := userUseCase.New(repo)
+		useCase := newUseCase(repo)
 
 		err := useCase.DeleteUser(context.Background(), uuid.New())
 		if !errors.Is(err, domain.ErrNotFound) {
 			t.Fatalf("got error %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+}
+
+func hashPassword(t *testing.T, plaintext string) string {
+	t.Helper()
+	password, err := domain.NewPassword(plaintext)
+	if err != nil {
+		t.Fatalf("hashPassword: unexpected error: %v", err)
+	}
+	return password.Hash()
+}
+
+func TestUseCase_LoginStart(t *testing.T) {
+	t.Parallel()
+
+	t.Run("generates and sends an otp on success", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{
+			ID:           uuid.New(),
+			Email:        "taro@example.com",
+			PasswordHash: hashPassword(t, "password123"),
+			Name:         "Taro",
+		}
+		repo := &mockRepository{existingByMail: user}
+		otpRepo := &mockLoginOTPRepository{}
+		emailSender := &mockEmailSender{}
+		useCase := userUseCase.New(repo, &mockSessionRepository{}, otpRepo, emailSender)
+
+		if err := useCase.LoginStart(context.Background(), user.Email, "password123"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(otpRepo.createdOTPs) != 1 {
+			t.Fatalf("createdOTPs = %d, want 1", len(otpRepo.createdOTPs))
+		}
+		if otpRepo.createdOTPs[0].UserID != user.ID {
+			t.Errorf("otp UserID = %v, want %v", otpRepo.createdOTPs[0].UserID, user.ID)
+		}
+		if emailSender.sentTo != user.Email {
+			t.Errorf("sentTo = %q, want %q", emailSender.sentTo, user.Email)
+		}
+		if emailSender.sentCode != otpRepo.createdOTPs[0].Code {
+			t.Errorf("sentCode = %q, want %q", emailSender.sentCode, otpRepo.createdOTPs[0].Code)
+		}
+	})
+
+	t.Run("returns ErrInvalidCredentials when the email is unknown", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := newUseCase(repo)
+
+		err := useCase.LoginStart(context.Background(), "unknown@example.com", "password123")
+		if !errors.Is(err, domain.ErrInvalidCredentials) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidCredentials)
+		}
+	})
+
+	t.Run("returns ErrInvalidCredentials when the password does not match", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{
+			ID:           uuid.New(),
+			Email:        "taro@example.com",
+			PasswordHash: hashPassword(t, "password123"),
+			Name:         "Taro",
+		}
+		repo := &mockRepository{existingByMail: user}
+		useCase := newUseCase(repo)
+
+		err := useCase.LoginStart(context.Background(), user.Email, "wrong-password")
+		if !errors.Is(err, domain.ErrInvalidCredentials) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidCredentials)
+		}
+	})
+
+	t.Run("propagates email sender error", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{
+			ID:           uuid.New(),
+			Email:        "taro@example.com",
+			PasswordHash: hashPassword(t, "password123"),
+			Name:         "Taro",
+		}
+		repo := &mockRepository{existingByMail: user}
+		emailSender := &mockEmailSender{sendErr: errors.New("smtp error")}
+		useCase := userUseCase.New(repo, &mockSessionRepository{}, &mockLoginOTPRepository{}, emailSender)
+
+		err := useCase.LoginStart(context.Background(), user.Email, "password123")
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
+func TestUseCase_LoginVerify(t *testing.T) {
+	t.Parallel()
+
+	t.Run("issues a session on success", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{ID: uuid.New(), Email: "taro@example.com", Name: "Taro"}
+		otp := &userUseCase.OTP{ID: uuid.New(), UserID: user.ID, Code: "123456", ExpiresAt: time.Now().Add(10 * time.Minute)}
+		repo := &mockRepository{existingByMail: user}
+		otpRepo := &mockLoginOTPRepository{existingOTP: otp}
+		sessionRepo := &mockSessionRepository{}
+		useCase := userUseCase.New(repo, sessionRepo, otpRepo, &mockEmailSender{})
+
+		session, err := useCase.LoginVerify(context.Background(), user.Email, "123456")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if session.UserID != user.ID {
+			t.Errorf("session UserID = %v, want %v", session.UserID, user.ID)
+		}
+		if sessionRepo.createdSession != session {
+			t.Error("session was not persisted via SessionRepository.Create")
+		}
+		if len(otpRepo.deletedIDs) != 1 || otpRepo.deletedIDs[0] != otp.ID {
+			t.Errorf("deletedIDs = %v, want [%v]", otpRepo.deletedIDs, otp.ID)
+		}
+	})
+
+	t.Run("returns ErrInvalidCredentials when the email is unknown", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := newUseCase(repo)
+
+		_, err := useCase.LoginVerify(context.Background(), "unknown@example.com", "123456")
+		if !errors.Is(err, domain.ErrInvalidCredentials) {
+			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidCredentials)
+		}
+	})
+
+	t.Run("returns ErrInvalidOTP when no otp exists", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{ID: uuid.New(), Email: "taro@example.com", Name: "Taro"}
+		repo := &mockRepository{existingByMail: user}
+		useCase := newUseCase(repo)
+
+		_, err := useCase.LoginVerify(context.Background(), user.Email, "123456")
+		if !errors.Is(err, userUseCase.ErrInvalidOTP) {
+			t.Fatalf("got error %v, want %v", err, userUseCase.ErrInvalidOTP)
+		}
+	})
+
+	t.Run("returns ErrOTPExpired when the otp has expired", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{ID: uuid.New(), Email: "taro@example.com", Name: "Taro"}
+		otp := &userUseCase.OTP{ID: uuid.New(), UserID: user.ID, Code: "123456", ExpiresAt: time.Now().Add(-time.Minute)}
+		repo := &mockRepository{existingByMail: user}
+		otpRepo := &mockLoginOTPRepository{existingOTP: otp}
+		useCase := userUseCase.New(repo, &mockSessionRepository{}, otpRepo, &mockEmailSender{})
+
+		_, err := useCase.LoginVerify(context.Background(), user.Email, "123456")
+		if !errors.Is(err, userUseCase.ErrOTPExpired) {
+			t.Fatalf("got error %v, want %v", err, userUseCase.ErrOTPExpired)
+		}
+	})
+
+	t.Run("returns ErrInvalidOTP when the code does not match", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{ID: uuid.New(), Email: "taro@example.com", Name: "Taro"}
+		otp := &userUseCase.OTP{ID: uuid.New(), UserID: user.ID, Code: "123456", ExpiresAt: time.Now().Add(10 * time.Minute)}
+		repo := &mockRepository{existingByMail: user}
+		otpRepo := &mockLoginOTPRepository{existingOTP: otp}
+		useCase := userUseCase.New(repo, &mockSessionRepository{}, otpRepo, &mockEmailSender{})
+
+		_, err := useCase.LoginVerify(context.Background(), user.Email, "999999")
+		if !errors.Is(err, userUseCase.ErrInvalidOTP) {
+			t.Fatalf("got error %v, want %v", err, userUseCase.ErrInvalidOTP)
+		}
+	})
+
+	t.Run("propagates session repository error", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{ID: uuid.New(), Email: "taro@example.com", Name: "Taro"}
+		otp := &userUseCase.OTP{ID: uuid.New(), UserID: user.ID, Code: "123456", ExpiresAt: time.Now().Add(10 * time.Minute)}
+		repo := &mockRepository{existingByMail: user}
+		otpRepo := &mockLoginOTPRepository{existingOTP: otp}
+		sessionRepo := &mockSessionRepository{createErr: errors.New("db error")}
+		useCase := userUseCase.New(repo, sessionRepo, otpRepo, &mockEmailSender{})
+
+		_, err := useCase.LoginVerify(context.Background(), user.Email, "123456")
+		if err == nil {
+			t.Fatal("expected error, got nil")
 		}
 	})
 }

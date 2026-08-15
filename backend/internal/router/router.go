@@ -5,6 +5,7 @@ import (
 
 	"github.com/Application-drop-up/Travellle/internal/handler"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/external"
+	"github.com/Application-drop-up/Travellle/internal/infrastructure/notification"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
 	noteuc "github.com/Application-drop-up/Travellle/internal/usecase/note"
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
@@ -27,7 +28,12 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 	pinHandler := handler.NewPinHandler(pinUseCase)
 	noteHandler := handler.NewNoteHandler(noteUseCase)
 	spotHandler := handler.NewSpotHandler(spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey)))
-	authHandler := handler.NewAuthHandler(useruc.New(persistence.NewUserRepository(db)))
+	authHandler := handler.NewAuthHandler(useruc.New(
+		persistence.NewUserRepository(db),
+		persistence.NewSessionRepository(db),
+		persistence.NewLoginOTPRepository(db),
+		notification.NewLogEmailSender(),
+	))
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
