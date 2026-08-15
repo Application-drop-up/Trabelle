@@ -42,7 +42,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
@@ -67,6 +67,9 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 		r.Get("/user/{id}", authHandler.GetByID)
 		r.Patch("/user/{id}", authHandler.Update)
 		r.Delete("/user/{id}", authHandler.Delete)
+
+		r.Post("/login", authHandler.LoginStart)
+		r.Post("/login/verify", authHandler.LoginVerify)
 	})
 
 	return mux
