@@ -11,6 +11,7 @@ import (
 	userdomain "github.com/Application-drop-up/Travellle/internal/domain/user"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
 	"github.com/Application-drop-up/Travellle/internal/testutil"
+	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 )
 
 func TestSessionRepository(t *testing.T) {
@@ -35,8 +36,8 @@ func TestSessionRepository(t *testing.T) {
 		return user.ID
 	}
 
-	newRecord := func(userID uuid.UUID) *persistence.SessionRecord {
-		return &persistence.SessionRecord{
+	newRecord := func(userID uuid.UUID) *useruc.Session {
+		return &useruc.Session{
 			ID:        uuid.New(),
 			UserID:    userID,
 			Token:     uuid.New().String(),
@@ -71,8 +72,8 @@ func TestSessionRepository(t *testing.T) {
 		t.Parallel()
 
 		_, err := sessionRepo.FindByToken(context.Background(), "unknown-token")
-		if !errors.Is(err, persistence.ErrSessionNotFound) {
-			t.Errorf("FindByToken() error = %v, want %v", err, persistence.ErrSessionNotFound)
+		if !errors.Is(err, useruc.ErrSessionNotFound) {
+			t.Errorf("FindByToken() error = %v, want %v", err, useruc.ErrSessionNotFound)
 		}
 	})
 
@@ -90,8 +91,8 @@ func TestSessionRepository(t *testing.T) {
 		}
 
 		_, err := sessionRepo.FindByToken(context.Background(), record.Token)
-		if !errors.Is(err, persistence.ErrSessionNotFound) {
-			t.Errorf("FindByToken() after delete error = %v, want %v", err, persistence.ErrSessionNotFound)
+		if !errors.Is(err, useruc.ErrSessionNotFound) {
+			t.Errorf("FindByToken() after delete error = %v, want %v", err, useruc.ErrSessionNotFound)
 		}
 	})
 
@@ -99,8 +100,8 @@ func TestSessionRepository(t *testing.T) {
 		t.Parallel()
 
 		err := sessionRepo.Delete(context.Background(), "unknown-token")
-		if !errors.Is(err, persistence.ErrSessionNotFound) {
-			t.Errorf("Delete() error = %v, want %v", err, persistence.ErrSessionNotFound)
+		if !errors.Is(err, useruc.ErrSessionNotFound) {
+			t.Errorf("Delete() error = %v, want %v", err, useruc.ErrSessionNotFound)
 		}
 	})
 }

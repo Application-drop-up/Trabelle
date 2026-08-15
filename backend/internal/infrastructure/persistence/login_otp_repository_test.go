@@ -11,6 +11,7 @@ import (
 	userdomain "github.com/Application-drop-up/Travellle/internal/domain/user"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
 	"github.com/Application-drop-up/Travellle/internal/testutil"
+	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 )
 
 func TestLoginOTPRepository(t *testing.T) {
@@ -35,8 +36,8 @@ func TestLoginOTPRepository(t *testing.T) {
 		return user.ID
 	}
 
-	newRecord := func(userID uuid.UUID) *persistence.LoginOTPRecord {
-		return &persistence.LoginOTPRecord{
+	newRecord := func(userID uuid.UUID) *useruc.OTP {
+		return &useruc.OTP{
 			ID:        uuid.New(),
 			UserID:    userID,
 			Code:      "123456",
@@ -71,8 +72,8 @@ func TestLoginOTPRepository(t *testing.T) {
 		t.Parallel()
 
 		_, err := otpRepo.FindByUserID(context.Background(), uuid.New())
-		if !errors.Is(err, persistence.ErrLoginOTPNotFound) {
-			t.Errorf("FindByUserID() error = %v, want %v", err, persistence.ErrLoginOTPNotFound)
+		if !errors.Is(err, useruc.ErrOTPNotFound) {
+			t.Errorf("FindByUserID() error = %v, want %v", err, useruc.ErrOTPNotFound)
 		}
 	})
 
@@ -116,8 +117,8 @@ func TestLoginOTPRepository(t *testing.T) {
 		}
 
 		_, err := otpRepo.FindByUserID(context.Background(), userID)
-		if !errors.Is(err, persistence.ErrLoginOTPNotFound) {
-			t.Errorf("FindByUserID() after delete error = %v, want %v", err, persistence.ErrLoginOTPNotFound)
+		if !errors.Is(err, useruc.ErrOTPNotFound) {
+			t.Errorf("FindByUserID() after delete error = %v, want %v", err, useruc.ErrOTPNotFound)
 		}
 	})
 
@@ -125,8 +126,8 @@ func TestLoginOTPRepository(t *testing.T) {
 		t.Parallel()
 
 		err := otpRepo.Delete(context.Background(), uuid.New())
-		if !errors.Is(err, persistence.ErrLoginOTPNotFound) {
-			t.Errorf("Delete() error = %v, want %v", err, persistence.ErrLoginOTPNotFound)
+		if !errors.Is(err, useruc.ErrOTPNotFound) {
+			t.Errorf("Delete() error = %v, want %v", err, useruc.ErrOTPNotFound)
 		}
 	})
 }
