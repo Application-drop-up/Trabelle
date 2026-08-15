@@ -23,6 +23,13 @@ func NewPassword(plaintext string) (Password, error) {
 	return Password{hash: string(hashed)}, nil
 }
 
+// NewPasswordFromHash wraps an already-hashed password (e.g. loaded from
+// storage) so it can be verified via Matches, without re-validating or
+// re-hashing it.
+func NewPasswordFromHash(hash string) Password {
+	return Password{hash: hash}
+}
+
 func (p Password) Hash() string {
 	return p.hash
 }

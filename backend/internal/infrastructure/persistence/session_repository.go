@@ -5,22 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/google/uuid"
+	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 )
-
-var ErrSessionNotFound = errors.New("session not found")
-
-// SessionRecord is this layer's own representation of a session row,
-// kept independent of the Application layer's Session type.
-type SessionRecord struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Token     string
-	ExpiresAt time.Time
-	CreatedAt time.Time
-}
 
 type SessionRepository struct {
 	db *sql.DB
@@ -30,31 +17,31 @@ func NewSessionRepository(db *sql.DB) *SessionRepository {
 	return &SessionRepository{db: db}
 }
 
-func (repo *SessionRepository) Create(ctx context.Context, record *SessionRecord) error {
+func (repo *SessionRepository) Create(ctx context.Context, session *useruc.Session) error {
 	query := `
 		INSERT INTO sessions (id, user_id, token, expires_at)
 		VALUES ($1, $2, $3, $4)
 		RETURNING created_at`
-	err := repo.db.QueryRowContext(ctx, query, record.ID, record.UserID, record.Token, record.ExpiresAt).
-		Scan(&record.CreatedAt)
+	err := repo.db.QueryRowContext(ctx, query, session.ID, session.UserID, session.Token, session.ExpiresAt).
+		Scan(&session.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert session: %w", err)
 	}
 	return nil
 }
 
-func (repo *SessionRepository) FindByToken(ctx context.Context, token string) (*SessionRecord, error) {
+func (repo *SessionRepository) FindByToken(ctx context.Context, token string) (*useruc.Session, error) {
 	query := `SELECT id, user_id, token, expires_at, created_at FROM sessions WHERE token = $1`
-	record := &SessionRecord{}
+	session := &useruc.Session{}
 	err := repo.db.QueryRowContext(ctx, query, token).
-		Scan(&record.ID, &record.UserID, &record.Token, &record.ExpiresAt, &record.CreatedAt)
+		Scan(&session.ID, &session.UserID, &session.Token, &session.ExpiresAt, &session.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrSessionNotFound
+		return nil, useruc.ErrSessionNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("find session by token: %w", err)
 	}
-	return record, nil
+	return session, nil
 }
 
 func (repo *SessionRepository) Delete(ctx context.Context, token string) error {
@@ -68,7 +55,7 @@ func (repo *SessionRepository) Delete(ctx context.Context, token string) error {
 		return fmt.Errorf("delete session rows affected: %w", err)
 	}
 	if rowsAffected == 0 {
-		return ErrSessionNotFound
+		return useruc.ErrSessionNotFound
 	}
 	return nil
 }
