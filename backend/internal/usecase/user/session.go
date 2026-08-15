@@ -44,9 +44,9 @@ func newSession(userID uuid.UUID) (*Session, error) {
 }
 
 func generateToken() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(b), nil
+	return hex.EncodeToString(tokenBytes), nil
 }

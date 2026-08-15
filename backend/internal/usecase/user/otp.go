@@ -52,18 +52,18 @@ func newOTP(userID uuid.UUID) (*OTP, error) {
 	}, nil
 }
 
-func (o *OTP) isExpired() bool {
-	return time.Now().After(o.ExpiresAt)
+func (otp *OTP) isExpired() bool {
+	return time.Now().After(otp.ExpiresAt)
 }
 
-func (o *OTP) matches(code string) bool {
-	return o.Code == code
+func (otp *OTP) matches(code string) bool {
+	return otp.Code == code
 }
 
 func generateCode() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(otpCodeMax))
+	randomNumber, err := rand.Int(rand.Reader, big.NewInt(otpCodeMax))
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(otpCodeFmt, n.Int64()), nil
+	return fmt.Sprintf(otpCodeFmt, randomNumber.Int64()), nil
 }
