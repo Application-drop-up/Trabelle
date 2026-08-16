@@ -184,3 +184,23 @@ func (useCase *UseCase) LoginVerify(ctx context.Context, email, code string) (*S
 
 	return session, nil
 }
+
+// CurrentUser resolves the authenticated user from a session token.
+func (useCase *UseCase) CurrentUser(ctx context.Context, sessionToken string) (*UserDto, error) {
+	session, err := useCase.sessionRepo.FindByToken(ctx, sessionToken)
+	if err != nil {
+		if errors.Is(err, ErrSessionNotFound) {
+			return nil, ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("find session by token: %w", err)
+	}
+	if session.isExpired() {
+		return nil, ErrSessionNotFound
+	}
+
+	user, err := useCase.repo.FindByID(ctx, session.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("find user by id: %w", err)
+	}
+	return NewUserDto(user), nil
+}
