@@ -1,6 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 
-import type { RegisterUserInput, UpdateUserInput, User } from "@/domain/user/types";
+import type {
+  LoginStartInput,
+  LoginVerifyInput,
+  RegisterUserInput,
+  UpdateUserInput,
+  User,
+} from "@/domain/user/types";
 import { useUser } from "./useUser";
 
 const mockInput: RegisterUserInput = {
@@ -25,6 +31,16 @@ const mockUpdatedUser: User = {
   ...mockUser,
   name: "Jiro",
   email: "jiro@example.com",
+};
+
+const mockLoginStartInput: LoginStartInput = {
+  email: "taro@example.com",
+  password: "password123",
+};
+
+const mockLoginVerifyInput: LoginVerifyInput = {
+  email: "taro@example.com",
+  code: "123456",
 };
 
 beforeEach(() => {
@@ -290,6 +306,186 @@ describe("useUser", () => {
       expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/api/v1/user/${mockUser.id}`),
         expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+  });
+
+  describe("loginStart", () => {
+    it("returns true on success", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ message: "verification code sent" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.loginStart(mockLoginStartInput);
+      });
+
+      expect(returned).toBe(true);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBeNull();
+    });
+
+    it("returns false and sets error state on failure", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        json: async () => ({ error: "invalid email or password" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = true;
+      await act(async () => {
+        returned = await result.current.loginStart(mockLoginStartInput);
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.error).toBe("invalid email or password");
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("sets loading true while fetching", async () => {
+      let resolveFetch!: (value: unknown) => void;
+      global.fetch = jest.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useUser());
+
+      act(() => {
+        result.current.loginStart(mockLoginStartInput);
+      });
+
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => {
+        resolveFetch({
+          ok: true,
+          status: 200,
+          json: async () => ({ message: "verification code sent" }),
+        });
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("calls fetch with the correct URL and body", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ message: "verification code sent" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      await act(async () => {
+        await result.current.loginStart(mockLoginStartInput);
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/login"),
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(mockLoginStartInput),
+        }),
+      );
+    });
+  });
+
+  describe("loginVerify", () => {
+    it("returns true on success", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ message: "login successful" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.loginVerify(mockLoginVerifyInput);
+      });
+
+      expect(returned).toBe(true);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBeNull();
+    });
+
+    it("returns false and sets error state on failure", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        json: async () => ({ error: "invalid email or code" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = true;
+      await act(async () => {
+        returned = await result.current.loginVerify(mockLoginVerifyInput);
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.error).toBe("invalid email or code");
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("sets loading true while fetching", async () => {
+      let resolveFetch!: (value: unknown) => void;
+      global.fetch = jest.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useUser());
+
+      act(() => {
+        result.current.loginVerify(mockLoginVerifyInput);
+      });
+
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => {
+        resolveFetch({
+          ok: true,
+          status: 200,
+          json: async () => ({ message: "login successful" }),
+        });
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("calls fetch with the correct URL and body", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ message: "login successful" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      await act(async () => {
+        await result.current.loginVerify(mockLoginVerifyInput);
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/login/verify"),
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(mockLoginVerifyInput),
+        }),
       );
     });
   });
