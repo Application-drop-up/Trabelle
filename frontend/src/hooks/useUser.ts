@@ -3,7 +3,14 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
-import type { RegisterUserInput, UpdateUserInput, User } from "@/domain/user/types";
+import type {
+  LoginStartInput,
+  LoginVerifyInput,
+  MessageResponse,
+  RegisterUserInput,
+  UpdateUserInput,
+  User,
+} from "@/domain/user/types";
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -58,5 +65,43 @@ export function useUser() {
     }
   }, []);
 
-  return { user, setUser, loading, error, registerUser, updateUser, deleteUser };
+  const loginStart = useCallback(async (input: LoginStartInput): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await apiClient.post<MessageResponse>("/api/v1/login", input);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start login");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loginVerify = useCallback(async (input: LoginVerifyInput): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await apiClient.post<MessageResponse>("/api/v1/login/verify", input);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to verify login");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return {
+    user,
+    setUser,
+    loading,
+    error,
+    registerUser,
+    updateUser,
+    deleteUser,
+    loginStart,
+    loginVerify,
+  };
 }

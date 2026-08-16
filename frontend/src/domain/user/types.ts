@@ -15,3 +15,17 @@ export interface UpdateUserInput {
   name: string;
   email: string;
 }
+
+export interface LoginStartInput {
+  email: string;
+  password: string;
+}
+
+export interface LoginVerifyInput {
+  email: string;
+  code: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}
