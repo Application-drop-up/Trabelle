@@ -70,6 +70,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 
 		r.Post("/login", authHandler.LoginStart)
 		r.Post("/login/verify", authHandler.LoginVerify)
+		r.Get("/user/me", authHandler.Me)
 	})
 
 	return mux
