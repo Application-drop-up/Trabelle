@@ -72,8 +72,10 @@ func (m *mockRepository) Delete(_ context.Context, id uuid.UUID) error {
 
 // mockSessionRepository は userUseCase.SessionRepository のテスト用実装
 type mockSessionRepository struct {
-	createErr      error
-	createdSession *userUseCase.Session
+	createErr       error
+	createdSession  *userUseCase.Session
+	existingSession *userUseCase.Session
+	findByTokenErr  error
 }
 
 func (m *mockSessionRepository) Create(_ context.Context, session *userUseCase.Session) error {
@@ -85,6 +87,12 @@ func (m *mockSessionRepository) Create(_ context.Context, session *userUseCase.S
 }
 
 func (m *mockSessionRepository) FindByToken(_ context.Context, _ string) (*userUseCase.Session, error) {
+	if m.existingSession != nil {
+		return m.existingSession, nil
+	}
+	if m.findByTokenErr != nil {
+		return nil, m.findByTokenErr
+	}
 	return nil, userUseCase.ErrSessionNotFound
 }
 
@@ -635,6 +643,83 @@ func TestUseCase_LoginVerify(t *testing.T) {
 		useCase := userUseCase.New(repo, sessionRepo, otpRepo, &mockEmailSender{})
 
 		_, err := useCase.LoginVerify(context.Background(), user.Email, "123456")
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
+func TestUseCase_CurrentUser(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns the user for a valid session", func(t *testing.T) {
+		t.Parallel()
+
+		user := &domain.User{ID: uuid.New(), Email: "taro@example.com", Name: "Taro"}
+		session := &userUseCase.Session{
+			ID:        uuid.New(),
+			UserID:    user.ID,
+			Token:     "valid-token",
+			ExpiresAt: time.Now().Add(time.Hour),
+		}
+		repo := &mockRepository{existingByID: user}
+		sessionRepo := &mockSessionRepository{existingSession: session}
+		useCase := userUseCase.New(repo, sessionRepo, &mockLoginOTPRepository{}, &mockEmailSender{})
+
+		dto, err := useCase.CurrentUser(context.Background(), session.Token)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if dto.ID != user.ID {
+			t.Errorf("ID = %v, want %v", dto.ID, user.ID)
+		}
+	})
+
+	t.Run("returns ErrSessionNotFound when the session does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		useCase := newUseCase(repo)
+
+		_, err := useCase.CurrentUser(context.Background(), "unknown-token")
+		if !errors.Is(err, userUseCase.ErrSessionNotFound) {
+			t.Fatalf("got error %v, want %v", err, userUseCase.ErrSessionNotFound)
+		}
+	})
+
+	t.Run("returns ErrSessionNotFound when the session has expired", func(t *testing.T) {
+		t.Parallel()
+
+		session := &userUseCase.Session{
+			ID:        uuid.New(),
+			UserID:    uuid.New(),
+			Token:     "expired-token",
+			ExpiresAt: time.Now().Add(-time.Hour),
+		}
+		repo := &mockRepository{}
+		sessionRepo := &mockSessionRepository{existingSession: session}
+		useCase := userUseCase.New(repo, sessionRepo, &mockLoginOTPRepository{}, &mockEmailSender{})
+
+		_, err := useCase.CurrentUser(context.Background(), session.Token)
+		if !errors.Is(err, userUseCase.ErrSessionNotFound) {
+			t.Fatalf("got error %v, want %v", err, userUseCase.ErrSessionNotFound)
+		}
+	})
+
+	t.Run("propagates repository error when finding the user fails", func(t *testing.T) {
+		t.Parallel()
+
+		session := &userUseCase.Session{
+			ID:        uuid.New(),
+			UserID:    uuid.New(),
+			Token:     "valid-token",
+			ExpiresAt: time.Now().Add(time.Hour),
+		}
+		repo := &mockRepository{findByIDErr: errors.New("db error")}
+		sessionRepo := &mockSessionRepository{existingSession: session}
+		useCase := userUseCase.New(repo, sessionRepo, &mockLoginOTPRepository{}, &mockEmailSender{})
+
+		_, err := useCase.CurrentUser(context.Background(), session.Token)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
