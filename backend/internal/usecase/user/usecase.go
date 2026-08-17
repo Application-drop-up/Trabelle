@@ -116,34 +116,36 @@ func (useCase *UseCase) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 // LoginStart verifies email+password and, on success, generates and emails
-// a one-time code that must be confirmed via LoginVerify.
-func (useCase *UseCase) LoginStart(ctx context.Context, email, password string) error {
+// a one-time code that must be confirmed via LoginVerify. The code is
+// returned so the caller can decide whether it's safe to expose it (e.g.
+// only in a non-production environment, for local testing).
+func (useCase *UseCase) LoginStart(ctx context.Context, email, password string) (string, error) {
 	foundUser, err := useCase.repo.FindByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return domain.ErrInvalidCredentials
+			return "", domain.ErrInvalidCredentials
 		}
-		return fmt.Errorf("find user by email: %w", err)
+		return "", fmt.Errorf("find user by email: %w", err)
 	}
 
 	storedPassword := domain.NewPasswordFromHash(foundUser.PasswordHash)
 	if !storedPassword.Matches(password) {
-		return domain.ErrInvalidCredentials
+		return "", domain.ErrInvalidCredentials
 	}
 
 	otp, err := newOTP(foundUser.ID)
 	if err != nil {
-		return fmt.Errorf("generate otp: %w", err)
+		return "", fmt.Errorf("generate otp: %w", err)
 	}
 	if err := useCase.otpRepo.Create(ctx, otp); err != nil {
-		return fmt.Errorf("create otp: %w", err)
+		return "", fmt.Errorf("create otp: %w", err)
 	}
 
 	if err := useCase.emailSender.SendLoginCode(ctx, foundUser.Email, otp.Code); err != nil {
-		return fmt.Errorf("send login code: %w", err)
+		return "", fmt.Errorf("send login code: %w", err)
 	}
 
-	return nil
+	return otp.Code, nil
 }
 
 // LoginVerify checks the OTP code and, on success, issues a new Session.

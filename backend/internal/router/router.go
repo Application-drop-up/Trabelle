@@ -17,7 +17,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mux {
+func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev bool) *chi.Mux {
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
@@ -33,7 +33,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 		persistence.NewSessionRepository(db),
 		persistence.NewLoginOTPRepository(db),
 		notification.NewLogEmailSender(),
-	))
+	), isDev)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)

@@ -23,6 +23,8 @@ type loginVerifyRequest struct {
 
 type messageResponse struct {
 	Message string `json:"message"`
+	// Code is only populated in non-production environments.
+	Code string `json:"code,omitempty"`
 }
 
 func (authHandler *AuthHandler) LoginStart(rw http.ResponseWriter, req *http.Request) {
@@ -37,7 +39,7 @@ func (authHandler *AuthHandler) LoginStart(rw http.ResponseWriter, req *http.Req
 		return
 	}
 
-	err := authHandler.useCase.LoginStart(req.Context(), body.Email, body.Password)
+	code, err := authHandler.useCase.LoginStart(req.Context(), body.Email, body.Password)
 	if errors.Is(err, domain.ErrInvalidCredentials) {
 		writeError(rw, http.StatusUnauthorized, "invalid email or password")
 		return
@@ -47,7 +49,11 @@ func (authHandler *AuthHandler) LoginStart(rw http.ResponseWriter, req *http.Req
 		return
 	}
 
-	writeJSON(rw, http.StatusOK, messageResponse{Message: "verification code sent"})
+	response := messageResponse{Message: "verification code sent"}
+	if authHandler.isDev {
+		response.Code = code
+	}
+	writeJSON(rw, http.StatusOK, response)
 }
 
 func (authHandler *AuthHandler) LoginVerify(rw http.ResponseWriter, req *http.Request) {

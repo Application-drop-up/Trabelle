@@ -22,7 +22,7 @@ func TestPlanHandler_CreateAndGet(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.NewTestDB(t)
-	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	t.Run("creates a plan and returns it", func(t *testing.T) {
 		t.Parallel()
