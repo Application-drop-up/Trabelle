@@ -30,6 +30,10 @@ type SessionRepository interface {
 	Delete(ctx context.Context, token string) error
 }
 
+func (session *Session) isExpired() bool {
+	return time.Now().After(session.ExpiresAt)
+}
+
 func newSession(userID uuid.UUID) (*Session, error) {
 	token, err := generateToken()
 	if err != nil {

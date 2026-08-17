@@ -88,3 +88,23 @@ func (authHandler *AuthHandler) LoginVerify(rw http.ResponseWriter, req *http.Re
 
 	writeJSON(rw, http.StatusOK, messageResponse{Message: "login successful"})
 }
+
+func (authHandler *AuthHandler) Me(rw http.ResponseWriter, req *http.Request) {
+	cookie, err := req.Cookie(sessionCookieName)
+	if err != nil {
+		writeError(rw, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+
+	dto, err := authHandler.useCase.CurrentUser(req.Context(), cookie.Value)
+	if errors.Is(err, useruc.ErrSessionNotFound) {
+		writeError(rw, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+	if err != nil {
+		writeError(rw, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(rw, http.StatusOK, toUserResponse(dto))
+}
