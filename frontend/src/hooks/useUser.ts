@@ -93,6 +93,21 @@ export function useUser() {
     }
   }, []);
 
+  const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.get<User>("/api/v1/user/me");
+      setUser(result);
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch current user");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     user,
     setUser,
@@ -103,5 +118,6 @@ export function useUser() {
     deleteUser,
     loginStart,
     loginVerify,
+    fetchCurrentUser,
   };
 }
