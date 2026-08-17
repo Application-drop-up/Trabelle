@@ -15,7 +15,7 @@ func TestMeHandler(test *testing.T) {
 	test.Parallel()
 
 	db := testutil.NewTestDB(test)
-	mux := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	mux := router.New(db, "test-api-key", []string{"http://localhost:3000"}, true)
 
 	registerUser := func(test *testing.T, email, password string) userResponse {
 		test.Helper()
