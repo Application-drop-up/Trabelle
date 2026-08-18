@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { LoginView } from "./LoginView";
 
@@ -8,9 +8,14 @@ const mockOnChangeEmail = jest.fn();
 const mockOnChangePassword = jest.fn();
 const mockOnChangeCode = jest.fn();
 const mockUseLoginContainer = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock("@/containers/LoginContainer", () => ({
   useLoginContainer: (...args: unknown[]) => mockUseLoginContainer(...args),
+}));
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
 }));
 
 function credentialsState(overrides = {}) {
@@ -150,6 +155,35 @@ describe("LoginView", () => {
       fireEvent.click(screen.getByRole("button", { name: "ログイン" }));
 
       expect(mockOnSubmitCode).toHaveBeenCalledTimes(1);
+    });
+
+    it("redirects to /profile when onSubmitCode succeeds", async () => {
+      mockOnSubmitCode.mockResolvedValue(true);
+      mockUseLoginContainer.mockReturnValue(
+        credentialsState({ step: "otp", email: "taro@example.com", code: "123456" }),
+      );
+
+      render(<LoginView />);
+      fireEvent.click(screen.getByRole("button", { name: "ログイン" }));
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/profile");
+      });
+    });
+
+    it("does not redirect when onSubmitCode fails", async () => {
+      mockOnSubmitCode.mockResolvedValue(false);
+      mockUseLoginContainer.mockReturnValue(
+        credentialsState({ step: "otp", email: "taro@example.com", code: "123456" }),
+      );
+
+      render(<LoginView />);
+      fireEvent.click(screen.getByRole("button", { name: "ログイン" }));
+
+      await waitFor(() => {
+        expect(mockOnSubmitCode).toHaveBeenCalledTimes(1);
+      });
+      expect(mockPush).not.toHaveBeenCalled();
     });
 
     it("shows loading state on the submit button", () => {

@@ -1,10 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { Alert, Button, TextField } from "@mui/material";
 
 import { useLoginContainer } from "@/containers/LoginContainer";
 
 export function LoginView() {
+  const router = useRouter();
   const {
     step,
     email,
@@ -24,7 +27,8 @@ export function LoginView() {
     if (step === "credentials") {
       await onSubmitCredentials();
     } else {
-      await onSubmitCode();
+      const success = await onSubmitCode();
+      if (success) router.push("/profile");
     }
   };
 
