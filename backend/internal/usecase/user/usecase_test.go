@@ -76,6 +76,8 @@ type mockSessionRepository struct {
 	createdSession  *userUseCase.Session
 	existingSession *userUseCase.Session
 	findByTokenErr  error
+	deleteErr       error
+	deletedTokens   []string
 }
 
 func (m *mockSessionRepository) Create(_ context.Context, session *userUseCase.Session) error {
@@ -96,7 +98,11 @@ func (m *mockSessionRepository) FindByToken(_ context.Context, _ string) (*userU
 	return nil, userUseCase.ErrSessionNotFound
 }
 
-func (m *mockSessionRepository) Delete(_ context.Context, _ string) error {
+func (m *mockSessionRepository) Delete(_ context.Context, token string) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
+	m.deletedTokens = append(m.deletedTokens, token)
 	return nil
 }
 
@@ -725,6 +731,49 @@ func TestUseCase_CurrentUser(t *testing.T) {
 
 		_, err := useCase.CurrentUser(context.Background(), session.Token)
 		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}
+
+func TestUseCase_Logout(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deletes the session", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		sessionRepo := &mockSessionRepository{}
+		useCase := userUseCase.New(repo, sessionRepo, &mockLoginOTPRepository{}, &mockEmailSender{})
+
+		if err := useCase.Logout(context.Background(), "some-token"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(sessionRepo.deletedTokens) != 1 || sessionRepo.deletedTokens[0] != "some-token" {
+			t.Errorf("deletedTokens = %v, want [some-token]", sessionRepo.deletedTokens)
+		}
+	})
+
+	t.Run("succeeds when the session does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		sessionRepo := &mockSessionRepository{deleteErr: userUseCase.ErrSessionNotFound}
+		useCase := userUseCase.New(repo, sessionRepo, &mockLoginOTPRepository{}, &mockEmailSender{})
+
+		if err := useCase.Logout(context.Background(), "unknown-token"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		t.Parallel()
+
+		repo := &mockRepository{}
+		sessionRepo := &mockSessionRepository{deleteErr: errors.New("db error")}
+		useCase := userUseCase.New(repo, sessionRepo, &mockLoginOTPRepository{}, &mockEmailSender{})
+
+		if err := useCase.Logout(context.Background(), "some-token"); err == nil {
 			t.Fatal("expected error, got nil")
 		}
 	})

@@ -206,3 +206,16 @@ func (useCase *UseCase) CurrentUser(ctx context.Context, sessionToken string) (*
 	}
 	return NewUserDto(user), nil
 }
+
+// Logout invalidates the given session token. Already-invalid tokens are
+// treated as a successful logout, since the desired end state (no session)
+// already holds.
+func (useCase *UseCase) Logout(ctx context.Context, sessionToken string) error {
+	if err := useCase.sessionRepo.Delete(ctx, sessionToken); err != nil {
+		if errors.Is(err, ErrSessionNotFound) {
+			return nil
+		}
+		return fmt.Errorf("delete session: %w", err)
+	}
+	return nil
+}
