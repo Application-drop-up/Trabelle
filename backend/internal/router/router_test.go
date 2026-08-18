@@ -11,7 +11,7 @@ import (
 func TestNew_CORS(t *testing.T) {
 	t.Parallel()
 
-	r := router.New(nil, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(nil, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	t.Run("allows a configured origin", func(t *testing.T) {
 		t.Parallel()

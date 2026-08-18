@@ -76,7 +76,7 @@ func TestNoteHandler_CreateUpdateDelete(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.NewTestDB(t)
-	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	planID := createTestPlanForNote(t, r, "Note Handler Test Plan")
 	t.Cleanup(func() { _, _ = db.Exec("DELETE FROM plans WHERE id = $1", planID) })

@@ -29,6 +29,7 @@ services:
       DB_SSLMODE: disable
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+      APP_ENV: development
     ports:
       - "8180:8080"
     depends_on:

@@ -23,7 +23,7 @@ func TestUserHandler_Register(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.NewTestDB(t)
-	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	registerReq := func(body any) *httptest.ResponseRecorder {
 		raw, _ := json.Marshal(body)
@@ -128,7 +128,7 @@ func TestUserHandler_GetByID(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.NewTestDB(t)
-	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	getReq := func(id string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/user/"+id, nil)
@@ -200,7 +200,7 @@ func TestUserHandler_Update(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.NewTestDB(t)
-	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	updateReq := func(id string, body any) *httptest.ResponseRecorder {
 		raw, _ := json.Marshal(body)
@@ -325,7 +325,7 @@ func TestUserHandler_Delete(t *testing.T) {
 	t.Parallel()
 
 	db := testutil.NewTestDB(t)
-	r := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
 
 	deleteReq := func(id string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/user/"+id, nil)

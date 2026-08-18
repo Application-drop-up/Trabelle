@@ -481,7 +481,8 @@ func TestUseCase_LoginStart(t *testing.T) {
 		emailSender := &mockEmailSender{}
 		useCase := userUseCase.New(repo, &mockSessionRepository{}, otpRepo, emailSender)
 
-		if err := useCase.LoginStart(context.Background(), user.Email, "password123"); err != nil {
+		code, err := useCase.LoginStart(context.Background(), user.Email, "password123")
+		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
@@ -490,6 +491,9 @@ func TestUseCase_LoginStart(t *testing.T) {
 		}
 		if otpRepo.createdOTPs[0].UserID != user.ID {
 			t.Errorf("otp UserID = %v, want %v", otpRepo.createdOTPs[0].UserID, user.ID)
+		}
+		if code != otpRepo.createdOTPs[0].Code {
+			t.Errorf("code = %q, want %q", code, otpRepo.createdOTPs[0].Code)
 		}
 		if emailSender.sentTo != user.Email {
 			t.Errorf("sentTo = %q, want %q", emailSender.sentTo, user.Email)
@@ -505,7 +509,7 @@ func TestUseCase_LoginStart(t *testing.T) {
 		repo := &mockRepository{}
 		useCase := newUseCase(repo)
 
-		err := useCase.LoginStart(context.Background(), "unknown@example.com", "password123")
+		_, err := useCase.LoginStart(context.Background(), "unknown@example.com", "password123")
 		if !errors.Is(err, domain.ErrInvalidCredentials) {
 			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidCredentials)
 		}
@@ -523,7 +527,7 @@ func TestUseCase_LoginStart(t *testing.T) {
 		repo := &mockRepository{existingByMail: user}
 		useCase := newUseCase(repo)
 
-		err := useCase.LoginStart(context.Background(), user.Email, "wrong-password")
+		_, err := useCase.LoginStart(context.Background(), user.Email, "wrong-password")
 		if !errors.Is(err, domain.ErrInvalidCredentials) {
 			t.Fatalf("got error %v, want %v", err, domain.ErrInvalidCredentials)
 		}
@@ -542,7 +546,7 @@ func TestUseCase_LoginStart(t *testing.T) {
 		emailSender := &mockEmailSender{sendErr: errors.New("smtp error")}
 		useCase := userUseCase.New(repo, &mockSessionRepository{}, &mockLoginOTPRepository{}, emailSender)
 
-		err := useCase.LoginStart(context.Background(), user.Email, "password123")
+		_, err := useCase.LoginStart(context.Background(), user.Email, "password123")
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}

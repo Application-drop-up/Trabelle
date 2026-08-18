@@ -15,7 +15,7 @@ func TestLoginHandler(test *testing.T) {
 	test.Parallel()
 
 	db := testutil.NewTestDB(test)
-	mux := router.New(db, "test-api-key", []string{"http://localhost:3000"})
+	mux := router.New(db, "test-api-key", []string{"http://localhost:3000"}, true)
 
 	registerUser := func(test *testing.T, email, password string) userResponse {
 		test.Helper()
@@ -81,8 +81,19 @@ func TestLoginHandler(test *testing.T) {
 		}
 		test.Cleanup(func() { _, _ = db.Exec("DELETE FROM login_otps WHERE user_id = $1", created.ID) })
 
-		if code := otpCodeFor(test, created.ID); code == "" {
+		code := otpCodeFor(test, created.ID)
+		if code == "" {
 			test.Error("expected an otp to be created")
+		}
+
+		var got struct {
+			Code string `json:"code"`
+		}
+		if err := json.Unmarshal(recorder.Body.Bytes(), &got); err != nil {
+			test.Fatalf("failed to decode response: %v", err)
+		}
+		if got.Code != code {
+			test.Errorf("response code = %q, want %q (isDev should expose the otp)", got.Code, code)
 		}
 	})
 
@@ -198,4 +209,43 @@ func TestLoginHandler(test *testing.T) {
 			test.Errorf("status = %d, want %d", recorder.Code, http.StatusBadRequest)
 		}
 	})
+}
+
+func TestLoginHandler_ProductionDoesNotExposeOTP(test *testing.T) {
+	test.Parallel()
+
+	db := testutil.NewTestDB(test)
+	mux := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
+
+	raw, _ := json.Marshal(map[string]string{
+		"email":    "prod-login@example.com",
+		"password": "password123",
+		"name":     "Taro",
+	})
+	registerReq := httptest.NewRequest(http.MethodPost, "/api/v1/user/register", bytes.NewReader(raw))
+	registerReq.Header.Set("Content-Type", "application/json")
+	registerRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(registerRecorder, registerReq)
+	if registerRecorder.Code != http.StatusCreated {
+		test.Fatalf("registration status = %d, want %d, body: %s", registerRecorder.Code, http.StatusCreated, registerRecorder.Body.String())
+	}
+	var created userResponse
+	if err := json.Unmarshal(registerRecorder.Body.Bytes(), &created); err != nil {
+		test.Fatalf("failed to decode response: %v", err)
+	}
+	test.Cleanup(func() { _, _ = db.Exec("DELETE FROM users WHERE id = $1", created.ID) })
+	test.Cleanup(func() { _, _ = db.Exec("DELETE FROM login_otps WHERE user_id = $1", created.ID) })
+
+	loginRaw, _ := json.Marshal(map[string]string{"email": created.Email, "password": "password123"})
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(loginRaw))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(loginRecorder, loginReq)
+	if loginRecorder.Code != http.StatusOK {
+		test.Fatalf("login status = %d, want %d, body: %s", loginRecorder.Code, http.StatusOK, loginRecorder.Body.String())
+	}
+
+	if bytes.Contains(loginRecorder.Body.Bytes(), []byte(`"code"`)) {
+		test.Errorf("response leaks the otp code outside dev: %s", loginRecorder.Body.String())
+	}
 }

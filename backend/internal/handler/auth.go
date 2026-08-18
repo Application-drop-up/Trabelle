@@ -14,10 +14,11 @@ import (
 
 type AuthHandler struct {
 	useCase *useruc.UseCase
+	isDev   bool
 }
 
-func NewAuthHandler(useCase *useruc.UseCase) *AuthHandler {
-	return &AuthHandler{useCase: useCase}
+func NewAuthHandler(useCase *useruc.UseCase, isDev bool) *AuthHandler {
+	return &AuthHandler{useCase: useCase, isDev: isDev}
 }
 
 type registerRequest struct {
