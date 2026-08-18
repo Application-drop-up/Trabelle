@@ -43,7 +43,7 @@ describe("useUserProfileContainer", () => {
       ok: false,
       status: 401,
       statusText: "Unauthorized",
-      json: async () => ({ error: "not authenticated" }),
+      json: async () => ({ message: "not authenticated" }),
     } as Response);
 
     const { result } = renderHook(() => useUserProfileContainer());
