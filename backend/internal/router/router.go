@@ -70,6 +70,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev b
 
 		r.Post("/login", authHandler.LoginStart)
 		r.Post("/login/verify", authHandler.LoginVerify)
+		r.Post("/logout", authHandler.Logout)
 		r.Get("/user/me", authHandler.Me)
 	})
 
