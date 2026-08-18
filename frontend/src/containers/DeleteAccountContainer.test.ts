@@ -58,7 +58,7 @@ describe("useDeleteAccountContainer", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "user not found" }),
+        json: async () => ({ message: "user not found" }),
       } as Response);
 
       const { result } = renderHook(() => useDeleteAccountContainer(userId));

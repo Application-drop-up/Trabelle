@@ -71,7 +71,7 @@ describe("usePlanContainer", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "plan not found" }),
+        json: async () => ({ message: "plan not found" }),
       } as Response);
 
       const { result } = renderHook(() => usePlanContainer("invalid-token"));

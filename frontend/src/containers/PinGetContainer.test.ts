@@ -73,7 +73,7 @@ describe("usePinGetContainer", () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 500,
-        json: async () => ({ error: "internal server error" }),
+        json: async () => ({ message: "internal server error" }),
       } as Response);
 
       const { result } = renderHook(() => usePinGetContainer());

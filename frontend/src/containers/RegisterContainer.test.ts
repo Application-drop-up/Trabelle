@@ -113,7 +113,7 @@ describe("useRegisterContainer", () => {
         ok: false,
         status: 409,
         statusText: "Conflict",
-        json: async () => ({ error: "email already taken" }),
+        json: async () => ({ message: "email already taken" }),
       } as Response);
 
       const { result } = renderHook(() => useRegisterContainer());

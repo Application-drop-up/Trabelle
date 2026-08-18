@@ -52,7 +52,7 @@ describe("usePins", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
-        json: async () => ({ error: "invalid pin data" }),
+        json: async () => ({ message: "invalid pin data" }),
       } as Response);
 
       const { result } = renderHook(() => usePins());
@@ -129,7 +129,7 @@ describe("usePins", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "pin not found" }),
+        json: async () => ({ message: "pin not found" }),
       } as Response);
 
       const { result } = renderHook(() => usePins());
@@ -169,7 +169,7 @@ describe("usePins", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "pin not found" }),
+        json: async () => ({ message: "pin not found" }),
       } as Response);
 
       const { result } = renderHook(() => usePins());

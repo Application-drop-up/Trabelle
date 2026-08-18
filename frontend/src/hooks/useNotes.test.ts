@@ -40,7 +40,7 @@ describe("useNotes", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
-        json: async () => ({ error: "invalid note content" }),
+        json: async () => ({ message: "invalid note content" }),
       } as Response);
 
       const { result } = renderHook(() => useNotes());
@@ -99,7 +99,7 @@ describe("useNotes", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "note not found" }),
+        json: async () => ({ message: "note not found" }),
       } as Response);
 
       const { result } = renderHook(() => useNotes());
@@ -135,7 +135,7 @@ describe("useNotes", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "note not found" }),
+        json: async () => ({ message: "note not found" }),
       } as Response);
 
       const { result } = renderHook(() => useNotes());

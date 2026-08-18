@@ -42,7 +42,7 @@ describe("useSpots", () => {
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
-        json: async () => ({ error: "search failed" }),
+        json: async () => ({ message: "search failed" }),
       } as Response);
 
       const { result } = renderHook(() => useSpots());
