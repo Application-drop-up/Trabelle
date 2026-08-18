@@ -104,7 +104,7 @@ describe("useLoginContainer", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-        json: async () => ({ error: "invalid email or password" }),
+        json: async () => ({ message: "invalid email or password" }),
       } as Response);
 
       const { result } = renderHook(() => useLoginContainer());
@@ -191,7 +191,7 @@ describe("useLoginContainer", () => {
           ok: false,
           status: 401,
           statusText: "Unauthorized",
-          json: async () => ({ error: "invalid email or code" }),
+          json: async () => ({ message: "invalid email or code" }),
         } as Response);
 
       const { result } = renderHook(() => useLoginContainer());

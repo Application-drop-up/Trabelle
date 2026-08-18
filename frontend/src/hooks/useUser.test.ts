@@ -74,7 +74,7 @@ describe("useUser", () => {
         ok: false,
         status: 409,
         statusText: "Conflict",
-        json: async () => ({ error: "email already taken" }),
+        json: async () => ({ message: "email already taken" }),
       } as Response);
 
       const { result } = renderHook(() => useUser());
@@ -164,7 +164,7 @@ describe("useUser", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "user not found" }),
+        json: async () => ({ message: "user not found" }),
       } as Response);
 
       const { result } = renderHook(() => useUser());
@@ -253,7 +253,7 @@ describe("useUser", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "user not found" }),
+        json: async () => ({ message: "user not found" }),
       } as Response);
 
       const { result } = renderHook(() => useUser());
@@ -335,7 +335,7 @@ describe("useUser", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-        json: async () => ({ error: "invalid email or password" }),
+        json: async () => ({ message: "invalid email or password" }),
       } as Response);
 
       const { result } = renderHook(() => useUser());
@@ -425,7 +425,7 @@ describe("useUser", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-        json: async () => ({ error: "invalid email or code" }),
+        json: async () => ({ message: "invalid email or code" }),
       } as Response);
 
       const { result } = renderHook(() => useUser());

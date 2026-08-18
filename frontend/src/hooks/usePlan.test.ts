@@ -43,7 +43,7 @@ describe("usePlan", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
-        json: async () => ({ error: "invalid request body" }),
+        json: async () => ({ message: "invalid request body" }),
       } as Response);
 
       const { result } = renderHook(() => usePlan());
@@ -110,7 +110,7 @@ describe("usePlan", () => {
         ok: false,
         status: 404,
         statusText: "Not Found",
-        json: async () => ({ error: "plan not found" }),
+        json: async () => ({ message: "plan not found" }),
       } as Response);
 
       const { result } = renderHook(() => usePlan());
