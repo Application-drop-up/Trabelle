@@ -114,3 +114,24 @@ func (authHandler *AuthHandler) Me(rw http.ResponseWriter, req *http.Request) {
 
 	writeJSON(rw, http.StatusOK, toUserResponse(dto))
 }
+
+func (authHandler *AuthHandler) Logout(rw http.ResponseWriter, req *http.Request) {
+	if cookie, err := req.Cookie(sessionCookieName); err == nil {
+		if err := authHandler.useCase.Logout(req.Context(), cookie.Value); err != nil {
+			writeError(rw, http.StatusInternalServerError, "internal server error")
+			return
+		}
+	}
+
+	http.SetCookie(rw, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	rw.WriteHeader(http.StatusNoContent)
+}
