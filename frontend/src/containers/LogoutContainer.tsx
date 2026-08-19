@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/components/UserProvider";
 
 type UseLogoutContainerReturn = {
   loading: boolean;
@@ -11,7 +11,7 @@ type UseLogoutContainerReturn = {
 };
 
 export function useLogoutContainer(): UseLogoutContainerReturn {
-  const { logoutUser, loading, error } = useUser();
+  const { logoutUser, loading, error } = useUserContext();
 
   const onLogout = useCallback(async (): Promise<boolean> => {
     return logoutUser();
