@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 
+import { UserProvider } from "@/components/UserProvider";
 import { useLoginContainer } from "./LoginContainer";
 
 beforeEach(() => {
@@ -8,7 +9,7 @@ beforeEach(() => {
 
 describe("useLoginContainer", () => {
   it("initializes on the credentials step with empty fields and no error", () => {
-    const { result } = renderHook(() => useLoginContainer());
+    const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
     expect(result.current.step).toBe("credentials");
     expect(result.current.email).toBe("");
@@ -20,7 +21,7 @@ describe("useLoginContainer", () => {
 
   describe("onChangeEmail / onChangePassword / onChangeCode", () => {
     it("updates each field independently", () => {
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -37,7 +38,7 @@ describe("useLoginContainer", () => {
   describe("onSubmitCredentials", () => {
     it("returns false and stays on the credentials step when a field is blank", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -55,7 +56,7 @@ describe("useLoginContainer", () => {
 
     it("returns false when a field is whitespace only", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -78,7 +79,7 @@ describe("useLoginContainer", () => {
         json: async () => ({ message: "verification code sent" }),
       } as Response);
 
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("  taro@example.com  ");
@@ -107,7 +108,7 @@ describe("useLoginContainer", () => {
         json: async () => ({ message: "invalid email or password" }),
       } as Response);
 
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -126,7 +127,7 @@ describe("useLoginContainer", () => {
   describe("onSubmitCode", () => {
     it("returns false when the code is blank", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       let returned = true;
       await act(async () => {
@@ -151,7 +152,7 @@ describe("useLoginContainer", () => {
           json: async () => ({ message: "login successful" }),
         } as Response);
 
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -194,7 +195,7 @@ describe("useLoginContainer", () => {
           json: async () => ({ message: "invalid email or code" }),
         } as Response);
 
-      const { result } = renderHook(() => useLoginContainer());
+      const { result } = renderHook(() => useLoginContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");

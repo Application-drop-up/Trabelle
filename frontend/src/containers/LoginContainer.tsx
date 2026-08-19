@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/components/UserProvider";
 
 type LoginStep = "credentials" | "otp";
 
@@ -25,7 +25,7 @@ export function useLoginContainer(): UseLoginContainerReturn {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
-  const { loginStart, loginVerify, loading, error } = useUser();
+  const { loginStart, loginVerify, loading, error } = useUserContext();
 
   const onChangeEmail = useCallback((value: string) => {
     setEmail(value);

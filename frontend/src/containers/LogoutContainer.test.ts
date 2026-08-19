@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 
+import { UserProvider } from "@/components/UserProvider";
 import { useLogoutContainer } from "./LogoutContainer";
 
 beforeEach(() => {
@@ -8,7 +9,7 @@ beforeEach(() => {
 
 describe("useLogoutContainer", () => {
   it("initializes with no error and not loading", () => {
-    const { result } = renderHook(() => useLogoutContainer());
+    const { result } = renderHook(() => useLogoutContainer(), { wrapper: UserProvider });
 
     expect(result.current.error).toBeNull();
     expect(result.current.loading).toBe(false);
@@ -21,7 +22,7 @@ describe("useLogoutContainer", () => {
         status: 204,
       } as Response);
 
-      const { result } = renderHook(() => useLogoutContainer());
+      const { result } = renderHook(() => useLogoutContainer(), { wrapper: UserProvider });
 
       let returned = false;
       await act(async () => {
@@ -42,7 +43,7 @@ describe("useLogoutContainer", () => {
         json: async () => ({ message: "internal server error" }),
       } as Response);
 
-      const { result } = renderHook(() => useLogoutContainer());
+      const { result } = renderHook(() => useLogoutContainer(), { wrapper: UserProvider });
 
       let returned = true;
       await act(async () => {

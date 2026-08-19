@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 import type { User } from "@/domain/user/types";
-import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/components/UserProvider";
 
 type UseUserProfileContainerReturn = {
   user: User | null;
@@ -12,7 +12,7 @@ type UseUserProfileContainerReturn = {
 };
 
 export function useUserProfileContainer(): UseUserProfileContainerReturn {
-  const { user, loading, error, fetchCurrentUser } = useUser();
+  const { user, loading, error, fetchCurrentUser } = useUserContext();
 
   useEffect(() => {
     fetchCurrentUser();

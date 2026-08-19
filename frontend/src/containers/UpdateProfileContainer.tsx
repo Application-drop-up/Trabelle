@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 
 import type { User } from "@/domain/user/types";
-import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/components/UserProvider";
 
 type UseUpdateProfileContainerReturn = {
   name: string;
@@ -21,7 +21,7 @@ export function useUpdateProfileContainer(
 ): UseUpdateProfileContainerReturn {
   const [name, setName] = useState(initial.name);
   const [email, setEmail] = useState(initial.email);
-  const { updateUser, loading, error } = useUser();
+  const { updateUser, loading, error } = useUserContext();
 
   const onChangeName = useCallback((value: string) => {
     setName(value);
