@@ -60,7 +60,7 @@ describe("usePinCreateContainer", () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 400,
-        json: async () => ({ error: "invalid pin data" }),
+        json: async () => ({ message: "invalid pin data" }),
       } as Response);
 
       const { result } = renderHook(() => usePinCreateContainer("plan-1"));

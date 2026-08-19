@@ -5,27 +5,35 @@ import (
 
 	"github.com/Application-drop-up/Travellle/internal/handler"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/external"
+	"github.com/Application-drop-up/Travellle/internal/infrastructure/notification"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
 	noteuc "github.com/Application-drop-up/Travellle/internal/usecase/note"
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
 	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
 	spotuc "github.com/Application-drop-up/Travellle/internal/usecase/spot"
+	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mux {
+func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev bool) *chi.Mux {
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
-	pinUC := pinuc.New(pinRepo)
-	noteUC := noteuc.New(noteRepo)
+	pinUseCase := pinuc.New(pinRepo)
+	noteUseCase := noteuc.New(noteRepo)
 
-	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUC, noteUC)
-	pinHandler := handler.NewPinHandler(pinUC)
-	noteHandler := handler.NewNoteHandler(noteUC)
+	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase)
+	pinHandler := handler.NewPinHandler(pinUseCase)
+	noteHandler := handler.NewNoteHandler(noteUseCase)
 	spotHandler := handler.NewSpotHandler(spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey)))
+	authHandler := handler.NewAuthHandler(useruc.New(
+		persistence.NewUserRepository(db),
+		persistence.NewSessionRepository(db),
+		persistence.NewLoginOTPRepository(db),
+		notification.NewLogEmailSender(),
+	), isDev)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
@@ -34,7 +42,7 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
@@ -53,6 +61,18 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string) *chi.Mu
 	mux.Post("/plans/{plan_id}/pins/{pin_id}/notes", noteHandler.Create)
 	mux.Patch("/plans/{plan_id}/pins/{pin_id}/notes/{note_id}", noteHandler.Update)
 	mux.Delete("/plans/{plan_id}/pins/{pin_id}/notes/{note_id}", noteHandler.Delete)
+
+	mux.Route("/api/v1", func(r chi.Router) {
+		r.Post("/user/register", authHandler.Register)
+		r.Get("/user/{id}", authHandler.GetByID)
+		r.Patch("/user/{id}", authHandler.Update)
+		r.Delete("/user/{id}", authHandler.Delete)
+
+		r.Post("/login", authHandler.LoginStart)
+		r.Post("/login/verify", authHandler.LoginVerify)
+		r.Post("/logout", authHandler.Logout)
+		r.Get("/user/me", authHandler.Me)
+	})
 
 	return mux
 }

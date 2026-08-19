@@ -96,7 +96,7 @@ describe("useCreatePlanContainer", () => {
         ok: false,
         status: 400,
         statusText: "Bad Request",
-        json: async () => ({ error: "title is required" }),
+        json: async () => ({ message: "title is required" }),
       } as Response);
 
       const { result } = renderHook(() => useCreatePlanContainer());

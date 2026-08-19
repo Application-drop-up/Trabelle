@@ -14,11 +14,11 @@ import (
 )
 
 type NoteHandler struct {
-	uc *noteuc.UseCase
+	useCase *noteuc.UseCase
 }
 
-func NewNoteHandler(uc *noteuc.UseCase) *NoteHandler {
-	return &NoteHandler{uc: uc}
+func NewNoteHandler(useCase *noteuc.UseCase) *NoteHandler {
+	return &NoteHandler{useCase: useCase}
 }
 
 type createNoteRequest struct {
@@ -47,7 +47,7 @@ func toNoteResponse(note *domain.Note) noteResponse {
 	}
 }
 
-func (nh *NoteHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (noteHandler *NoteHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid pin_id")
@@ -60,7 +60,7 @@ func (nh *NoteHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	note, err := nh.uc.CreateNote(req.Context(), noteuc.CreateInput{
+	note, err := noteHandler.useCase.CreateNote(req.Context(), noteuc.CreateInput{
 		PinID:   pinID,
 		Content: body.Content,
 	})
@@ -76,7 +76,7 @@ func (nh *NoteHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	writeJSON(rw, http.StatusCreated, toNoteResponse(note))
 }
 
-func (nh *NoteHandler) Update(rw http.ResponseWriter, req *http.Request) {
+func (noteHandler *NoteHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid pin_id")
@@ -94,7 +94,7 @@ func (nh *NoteHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	note, err := nh.uc.UpdateNote(req.Context(), pinID, noteID, noteuc.UpdateInput{Content: body.Content})
+	note, err := noteHandler.useCase.UpdateNote(req.Context(), pinID, noteID, noteuc.UpdateInput{Content: body.Content})
 	if errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "note not found")
 		return
@@ -107,7 +107,7 @@ func (nh *NoteHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	writeJSON(rw, http.StatusOK, toNoteResponse(note))
 }
 
-func (nh *NoteHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+func (noteHandler *NoteHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	pinID, err := uuid.Parse(chi.URLParam(req, "pin_id"))
 	if err != nil {
 		writeError(rw, http.StatusBadRequest, "invalid pin_id")
@@ -119,7 +119,7 @@ func (nh *NoteHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := nh.uc.DeleteNote(req.Context(), pinID, noteID); errors.Is(err, domain.ErrNotFound) {
+	if err := noteHandler.useCase.DeleteNote(req.Context(), pinID, noteID); errors.Is(err, domain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "note not found")
 		return
 	} else if err != nil {

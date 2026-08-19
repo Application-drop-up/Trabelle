@@ -33,7 +33,9 @@ func main() {
 		origins = defaultAllowedOrigins
 	}
 
-	r := router.New(conn, apiKey, strings.Split(origins, ","))
+	isDev := os.Getenv("APP_ENV") == "development"
+
+	r := router.New(conn, apiKey, strings.Split(origins, ","), isDev)
 
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
