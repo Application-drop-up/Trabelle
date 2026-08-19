@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 
+import { UserProvider } from "@/components/UserProvider";
 import type { User } from "@/domain/user/types";
 import { useUserProfileContainer } from "./UserProfileContainer";
 
@@ -22,7 +23,7 @@ describe("useUserProfileContainer", () => {
       json: async () => mockUser,
     } as Response);
 
-    const { result } = renderHook(() => useUserProfileContainer());
+    const { result } = renderHook(() => useUserProfileContainer(), { wrapper: UserProvider });
 
     expect(result.current.loading).toBe(true);
 
@@ -46,7 +47,7 @@ describe("useUserProfileContainer", () => {
       json: async () => ({ message: "not authenticated" }),
     } as Response);
 
-    const { result } = renderHook(() => useUserProfileContainer());
+    const { result } = renderHook(() => useUserProfileContainer(), { wrapper: UserProvider });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

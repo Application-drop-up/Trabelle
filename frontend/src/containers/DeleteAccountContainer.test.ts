@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 
+import { UserProvider } from "@/components/UserProvider";
 import { useDeleteAccountContainer } from "./DeleteAccountContainer";
 
 const userId = "user-1";
@@ -10,7 +11,9 @@ beforeEach(() => {
 
 describe("useDeleteAccountContainer", () => {
   it("initializes with isConfirming false and no error", () => {
-    const { result } = renderHook(() => useDeleteAccountContainer(userId));
+    const { result } = renderHook(() => useDeleteAccountContainer(userId), {
+      wrapper: UserProvider,
+    });
 
     expect(result.current.isConfirming).toBe(false);
     expect(result.current.error).toBeNull();
@@ -19,7 +22,9 @@ describe("useDeleteAccountContainer", () => {
 
   describe("onRequestDelete / onCancelDelete", () => {
     it("toggles isConfirming", () => {
-      const { result } = renderHook(() => useDeleteAccountContainer(userId));
+      const { result } = renderHook(() => useDeleteAccountContainer(userId), {
+        wrapper: UserProvider,
+      });
 
       act(() => {
         result.current.onRequestDelete();
@@ -40,7 +45,9 @@ describe("useDeleteAccountContainer", () => {
         status: 204,
       } as Response);
 
-      const { result } = renderHook(() => useDeleteAccountContainer(userId));
+      const { result } = renderHook(() => useDeleteAccountContainer(userId), {
+        wrapper: UserProvider,
+      });
 
       let returned = false;
       await act(async () => {
@@ -61,7 +68,9 @@ describe("useDeleteAccountContainer", () => {
         json: async () => ({ message: "user not found" }),
       } as Response);
 
-      const { result } = renderHook(() => useDeleteAccountContainer(userId));
+      const { result } = renderHook(() => useDeleteAccountContainer(userId), {
+        wrapper: UserProvider,
+      });
 
       let returned = true;
       await act(async () => {

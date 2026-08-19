@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 
+import { UserProvider } from "@/components/UserProvider";
 import type { User } from "@/domain/user/types";
 import { useRegisterContainer } from "./RegisterContainer";
 
@@ -16,7 +17,7 @@ beforeEach(() => {
 
 describe("useRegisterContainer", () => {
   it("initializes with empty fields and no error", () => {
-    const { result } = renderHook(() => useRegisterContainer());
+    const { result } = renderHook(() => useRegisterContainer(), { wrapper: UserProvider });
 
     expect(result.current.email).toBe("");
     expect(result.current.password).toBe("");
@@ -27,7 +28,7 @@ describe("useRegisterContainer", () => {
 
   describe("onChangeEmail / onChangePassword / onChangeName", () => {
     it("updates each field independently", () => {
-      const { result } = renderHook(() => useRegisterContainer());
+      const { result } = renderHook(() => useRegisterContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -44,7 +45,7 @@ describe("useRegisterContainer", () => {
   describe("onSubmit", () => {
     it("returns null when a field is blank", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useRegisterContainer());
+      const { result } = renderHook(() => useRegisterContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -62,7 +63,7 @@ describe("useRegisterContainer", () => {
 
     it("returns null when a field is whitespace only", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useRegisterContainer());
+      const { result } = renderHook(() => useRegisterContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
@@ -86,7 +87,7 @@ describe("useRegisterContainer", () => {
         json: async () => mockUser,
       } as Response);
 
-      const { result } = renderHook(() => useRegisterContainer());
+      const { result } = renderHook(() => useRegisterContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("  taro@example.com  ");
@@ -116,7 +117,7 @@ describe("useRegisterContainer", () => {
         json: async () => ({ message: "email already taken" }),
       } as Response);
 
-      const { result } = renderHook(() => useRegisterContainer());
+      const { result } = renderHook(() => useRegisterContainer(), { wrapper: UserProvider });
 
       act(() => {
         result.current.onChangeEmail("taro@example.com");
