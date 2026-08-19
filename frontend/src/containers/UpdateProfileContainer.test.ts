@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 
+import { UserProvider } from "@/components/UserProvider";
 import type { User } from "@/domain/user/types";
 import { useUpdateProfileContainer } from "./UpdateProfileContainer";
 
@@ -18,7 +19,9 @@ beforeEach(() => {
 
 describe("useUpdateProfileContainer", () => {
   it("initializes with the given name and email and no error", () => {
-    const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial));
+    const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial), {
+      wrapper: UserProvider,
+    });
 
     expect(result.current.name).toBe("Taro");
     expect(result.current.email).toBe("taro@example.com");
@@ -28,7 +31,9 @@ describe("useUpdateProfileContainer", () => {
 
   describe("onChangeName / onChangeEmail", () => {
     it("updates each field independently", () => {
-      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial));
+      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial), {
+        wrapper: UserProvider,
+      });
 
       act(() => {
         result.current.onChangeName("Jiro");
@@ -43,7 +48,9 @@ describe("useUpdateProfileContainer", () => {
   describe("onSubmitUpdate", () => {
     it("returns null when a field is blank", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial));
+      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial), {
+        wrapper: UserProvider,
+      });
 
       act(() => {
         result.current.onChangeName("");
@@ -60,7 +67,9 @@ describe("useUpdateProfileContainer", () => {
 
     it("returns null when a field is whitespace only", async () => {
       global.fetch = jest.fn();
-      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial));
+      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial), {
+        wrapper: UserProvider,
+      });
 
       act(() => {
         result.current.onChangeEmail("   ");
@@ -83,7 +92,9 @@ describe("useUpdateProfileContainer", () => {
         json: async () => updatedUser,
       } as Response);
 
-      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial));
+      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial), {
+        wrapper: UserProvider,
+      });
 
       act(() => {
         result.current.onChangeName("  Jiro  ");
@@ -109,7 +120,9 @@ describe("useUpdateProfileContainer", () => {
         json: async () => ({ message: "email already taken" }),
       } as Response);
 
-      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial));
+      const { result } = renderHook(() => useUpdateProfileContainer(mockUser.id, initial), {
+        wrapper: UserProvider,
+      });
 
       await act(async () => {
         await result.current.onSubmitUpdate();

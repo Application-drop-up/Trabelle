@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/components/UserProvider";
 
 type UseDeleteAccountContainerReturn = {
   isConfirming: boolean;
@@ -15,7 +15,7 @@ type UseDeleteAccountContainerReturn = {
 
 export function useDeleteAccountContainer(userId: string): UseDeleteAccountContainerReturn {
   const [isConfirming, setIsConfirming] = useState(false);
-  const { deleteUser, loading, error } = useUser();
+  const { deleteUser, loading, error } = useUserContext();
 
   const onRequestDelete = useCallback(() => {
     setIsConfirming(true);

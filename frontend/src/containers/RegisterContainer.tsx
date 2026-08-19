@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 
 import type { User } from "@/domain/user/types";
-import { useUser } from "@/hooks/useUser";
+import { useUserContext } from "@/components/UserProvider";
 
 type UseRegisterContainerReturn = {
   email: string;
@@ -21,7 +21,7 @@ export function useRegisterContainer(): UseRegisterContainerReturn {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const { registerUser, loading, error } = useUser();
+  const { registerUser, loading, error } = useUserContext();
 
   const onChangeEmail = useCallback((value: string) => {
     setEmail(value);

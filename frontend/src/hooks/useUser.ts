@@ -108,6 +108,21 @@ export function useUser() {
     }
   }, []);
 
+  const logoutUser = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await apiClient.post<void>("/api/v1/logout", {});
+      setUser(null);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to log out");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     user,
     setUser,
@@ -119,5 +134,6 @@ export function useUser() {
     loginStart,
     loginVerify,
     fetchCurrentUser,
+    logoutUser,
   };
 }

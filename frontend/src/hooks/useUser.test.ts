@@ -516,7 +516,7 @@ describe("useUser", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-        json: async () => ({ error: "not authenticated" }),
+        json: async () => ({ message: "not authenticated" }),
       } as Response);
 
       const { result } = renderHook(() => useUser());
@@ -572,6 +572,88 @@ describe("useUser", () => {
       expect(fetchCall[0]).toEqual(expect.stringContaining("/api/v1/user/me"));
       expect(fetchCall[1]).not.toHaveProperty("method");
       expect(fetchCall[1]).not.toHaveProperty("body");
+    });
+  });
+
+  describe("logoutUser", () => {
+    it("returns true and clears user state on success", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = false;
+      await act(async () => {
+        returned = await result.current.logoutUser();
+      });
+
+      expect(returned).toBe(true);
+      expect(result.current.user).toBeNull();
+      expect(result.current.loading).toBe(false);
+      expect(result.current.error).toBeNull();
+    });
+
+    it("returns false and sets error state on failure", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        json: async () => ({ message: "internal server error" }),
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      let returned = true;
+      await act(async () => {
+        returned = await result.current.logoutUser();
+      });
+
+      expect(returned).toBe(false);
+      expect(result.current.error).toBe("internal server error");
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("sets loading true while fetching", async () => {
+      let resolveFetch!: (value: unknown) => void;
+      global.fetch = jest.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useUser());
+
+      act(() => {
+        result.current.logoutUser();
+      });
+
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => {
+        resolveFetch({ ok: true, status: 204 });
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("calls fetch with the correct URL", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+      } as Response);
+
+      const { result } = renderHook(() => useUser());
+
+      await act(async () => {
+        await result.current.logoutUser();
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/logout"),
+        expect.objectContaining({ method: "POST" }),
+      );
     });
   });
 });
