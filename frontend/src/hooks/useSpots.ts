@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
+import { errorMessages } from "@/lib/messages";
 import type { Spot } from "@/domain/spots/types";
 
 export function useSpots() {
@@ -24,7 +25,7 @@ export function useSpots() {
       setSpots(result);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to search spots");
+      setError(err instanceof Error ? err.message : errorMessages.spots.search);
       return [];
     } finally {
       setLoading(false);

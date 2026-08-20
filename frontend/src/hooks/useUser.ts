@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
+import { errorMessages } from "@/lib/messages";
 import type {
   LoginStartInput,
   LoginVerifyInput,
@@ -25,7 +26,7 @@ export function useUser() {
       setUser(result);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to register user");
+      setError(err instanceof Error ? err.message : errorMessages.user.register);
       return null;
     } finally {
       setLoading(false);
@@ -41,7 +42,7 @@ export function useUser() {
         setUser(result);
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update user");
+        setError(err instanceof Error ? err.message : errorMessages.user.update);
         return null;
       } finally {
         setLoading(false);
@@ -58,7 +59,7 @@ export function useUser() {
       setUser(null);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user");
+      setError(err instanceof Error ? err.message : errorMessages.user.delete);
       return false;
     } finally {
       setLoading(false);
@@ -72,7 +73,7 @@ export function useUser() {
       await apiClient.post<MessageResponse>("/api/v1/login", input);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start login");
+      setError(err instanceof Error ? err.message : errorMessages.user.loginStart);
       return false;
     } finally {
       setLoading(false);
@@ -86,7 +87,7 @@ export function useUser() {
       await apiClient.post<MessageResponse>("/api/v1/login/verify", input);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to verify login");
+      setError(err instanceof Error ? err.message : errorMessages.user.loginVerify);
       return false;
     } finally {
       setLoading(false);
@@ -101,7 +102,7 @@ export function useUser() {
       setUser(result);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch current user");
+      setError(err instanceof Error ? err.message : errorMessages.user.fetchCurrentUser);
       return null;
     } finally {
       setLoading(false);
@@ -116,7 +117,7 @@ export function useUser() {
       setUser(null);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to log out");
+      setError(err instanceof Error ? err.message : errorMessages.user.logout);
       return false;
     } finally {
       setLoading(false);

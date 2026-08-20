@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
+import { errorMessages } from "@/lib/messages";
 import type { Plan } from "@/domain/plans/types";
 
 export function usePlan() {
@@ -18,7 +19,7 @@ export function usePlan() {
       setPlan(result);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create plan");
+      setError(err instanceof Error ? err.message : errorMessages.plan.create);
       return null;
     } finally {
       setLoading(false);
@@ -33,7 +34,7 @@ export function usePlan() {
       setPlan(result);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch plan");
+      setError(err instanceof Error ? err.message : errorMessages.plan.fetch);
       return null;
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
+import { errorMessages } from "@/lib/messages";
 import type { Note } from "@/domain/notes/types";
 
 export function useNotes() {
@@ -16,7 +17,7 @@ export function useNotes() {
       try {
         return await apiClient.post<Note>(`/plans/${planId}/pins/${pinId}/notes`, { content });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create note");
+        setError(err instanceof Error ? err.message : errorMessages.notes.create);
         return null;
       } finally {
         setLoading(false);
@@ -39,7 +40,7 @@ export function useNotes() {
           content,
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update note");
+        setError(err instanceof Error ? err.message : errorMessages.notes.update);
         return null;
       } finally {
         setLoading(false);
@@ -56,7 +57,7 @@ export function useNotes() {
         await apiClient.delete(`/plans/${planId}/pins/${pinId}/notes/${noteId}`);
         return true;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to delete note");
+        setError(err instanceof Error ? err.message : errorMessages.notes.delete);
         return false;
       } finally {
         setLoading(false);

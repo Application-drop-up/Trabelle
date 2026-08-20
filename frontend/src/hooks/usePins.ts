@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
+import { errorMessages } from "@/lib/messages";
 import type { CreatePinInput, Pin, UpdatePinInput } from "@/domain/pins/types";
 
 export function usePins() {
@@ -18,7 +19,7 @@ export function usePins() {
       setPins(result);
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch pins");
+      setError(err instanceof Error ? err.message : errorMessages.pins.fetch);
       return [];
     } finally {
       setLoading(false);
@@ -34,7 +35,7 @@ export function usePins() {
         setPins((prev) => [...prev, result]);
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create pin");
+        setError(err instanceof Error ? err.message : errorMessages.pins.create);
         return null;
       } finally {
         setLoading(false);
@@ -52,7 +53,7 @@ export function usePins() {
         setPins((prev) => prev.map((p) => (p.id === pinId ? result : p)));
         return result;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update pin");
+        setError(err instanceof Error ? err.message : errorMessages.pins.update);
         return null;
       } finally {
         setLoading(false);
@@ -69,7 +70,7 @@ export function usePins() {
       setPins((prev) => prev.filter((p) => p.id !== pinId));
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete pin");
+      setError(err instanceof Error ? err.message : errorMessages.pins.delete);
       return false;
     } finally {
       setLoading(false);
