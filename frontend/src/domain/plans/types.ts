@@ -1,10 +1,14 @@
-import type { PinWithNotes } from "@/domain/pins/types";
+import { z } from "zod";
 
-export interface Plan {
-  id: string;
-  share_token: string;
-  title: string;
-  pins: PinWithNotes[];
-  created_at: string;
-  updated_at: string;
-}
+import { pinWithNotesSchema } from "@/domain/pins/types";
+
+export const planSchema = z.object({
+  id: z.string(),
+  share_token: z.string(),
+  title: z.string(),
+  pins: z.array(pinWithNotesSchema),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type Plan = z.infer<typeof planSchema>;
