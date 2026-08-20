@@ -1,22 +1,30 @@
-import type { Note } from "@/domain/notes/types";
+import { z } from "zod";
 
-export type PinCategory = "restaurant" | "hotel" | "sightseeing" | "transport" | "other";
+import { noteSchema } from "@/domain/notes/types";
 
-export interface Pin {
-  id: string;
-  plan_id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  category: PinCategory;
-  colour: string;
-  created_at: string;
-  updated_at: string;
-}
+const pinCategorySchema = z.enum(["restaurant", "hotel", "sightseeing", "transport", "other"]);
 
-export interface PinWithNotes extends Pin {
-  notes: Note[];
-}
+export type PinCategory = z.infer<typeof pinCategorySchema>;
+
+export const pinSchema = z.object({
+  id: z.string(),
+  plan_id: z.string(),
+  name: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  category: pinCategorySchema,
+  colour: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type Pin = z.infer<typeof pinSchema>;
+
+export const pinWithNotesSchema = pinSchema.extend({
+  notes: z.array(noteSchema),
+});
+
+export type PinWithNotes = z.infer<typeof pinWithNotesSchema>;
 
 export interface CreatePinInput {
   name: string;

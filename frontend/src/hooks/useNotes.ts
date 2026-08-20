@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
 import { errorMessages } from "@/lib/messages";
-import type { Note } from "@/domain/notes/types";
+import { noteSchema, type Note } from "@/domain/notes/types";
 
 export function useNotes() {
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,9 @@ export function useNotes() {
       setLoading(true);
       setError(null);
       try {
-        return await apiClient.post<Note>(`/plans/${planId}/pins/${pinId}/notes`, { content });
+        return await apiClient.post(noteSchema, `/plans/${planId}/pins/${pinId}/notes`, {
+          content,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : errorMessages.notes.create);
         return null;
@@ -36,7 +38,7 @@ export function useNotes() {
       setLoading(true);
       setError(null);
       try {
-        return await apiClient.patch<Note>(`/plans/${planId}/pins/${pinId}/notes/${noteId}`, {
+        return await apiClient.patch(noteSchema, `/plans/${planId}/pins/${pinId}/notes/${noteId}`, {
           content,
         });
       } catch (err) {
