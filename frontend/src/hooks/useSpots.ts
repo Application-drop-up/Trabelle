@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { z } from "zod";
 
 import { apiClient } from "@/lib/apiClient";
 import { errorMessages } from "@/lib/messages";
-import type { Spot } from "@/domain/spots/types";
+import { spotSchema, type Spot } from "@/domain/spots/types";
 
 export function useSpots() {
   const [spots, setSpots] = useState<Spot[]>([]);
@@ -19,7 +20,8 @@ export function useSpots() {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiClient.get<Spot[]>(
+      const result = await apiClient.get(
+        z.array(spotSchema),
         `/spots/search?query=${encodeURIComponent(query)}`,
       );
       setSpots(result);

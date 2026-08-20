@@ -2,15 +2,16 @@
 
 import { useCallback, useState } from "react";
 
-import { apiClient } from "@/lib/apiClient";
+import { apiClient, voidSchema } from "@/lib/apiClient";
 import { errorMessages } from "@/lib/messages";
-import type {
-  LoginStartInput,
-  LoginVerifyInput,
-  MessageResponse,
-  RegisterUserInput,
-  UpdateUserInput,
-  User,
+import {
+  messageResponseSchema,
+  userSchema,
+  type LoginStartInput,
+  type LoginVerifyInput,
+  type RegisterUserInput,
+  type UpdateUserInput,
+  type User,
 } from "@/domain/user/types";
 
 export function useUser() {
@@ -22,7 +23,7 @@ export function useUser() {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiClient.post<User>("/api/v1/user/register", input);
+      const result = await apiClient.post(userSchema, "/api/v1/user/register", input);
       setUser(result);
       return result;
     } catch (err) {
@@ -38,7 +39,7 @@ export function useUser() {
       setLoading(true);
       setError(null);
       try {
-        const result = await apiClient.patch<User>(`/api/v1/user/${id}`, input);
+        const result = await apiClient.patch(userSchema, `/api/v1/user/${id}`, input);
         setUser(result);
         return result;
       } catch (err) {
@@ -70,7 +71,7 @@ export function useUser() {
     setLoading(true);
     setError(null);
     try {
-      await apiClient.post<MessageResponse>("/api/v1/login", input);
+      await apiClient.post(messageResponseSchema, "/api/v1/login", input);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : errorMessages.user.loginStart);
@@ -84,7 +85,7 @@ export function useUser() {
     setLoading(true);
     setError(null);
     try {
-      await apiClient.post<MessageResponse>("/api/v1/login/verify", input);
+      await apiClient.post(messageResponseSchema, "/api/v1/login/verify", input);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : errorMessages.user.loginVerify);
@@ -98,7 +99,7 @@ export function useUser() {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiClient.get<User>("/api/v1/user/me");
+      const result = await apiClient.get(userSchema, "/api/v1/user/me");
       setUser(result);
       return result;
     } catch (err) {
@@ -113,7 +114,7 @@ export function useUser() {
     setLoading(true);
     setError(null);
     try {
-      await apiClient.post<void>("/api/v1/logout", {});
+      await apiClient.post(voidSchema, "/api/v1/logout", {});
       setUser(null);
       return true;
     } catch (err) {

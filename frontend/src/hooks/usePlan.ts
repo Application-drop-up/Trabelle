@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 
 import { apiClient } from "@/lib/apiClient";
 import { errorMessages } from "@/lib/messages";
-import type { Plan } from "@/domain/plans/types";
+import { planSchema, type Plan } from "@/domain/plans/types";
 
 export function usePlan() {
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -15,7 +15,7 @@ export function usePlan() {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiClient.post<Plan>("/plans", { title });
+      const result = await apiClient.post(planSchema, "/plans", { title });
       setPlan(result);
       return result;
     } catch (err) {
@@ -30,7 +30,7 @@ export function usePlan() {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiClient.get<Plan>(`/plans/${shareToken}`);
+      const result = await apiClient.get(planSchema, `/plans/${shareToken}`);
       setPlan(result);
       return result;
     } catch (err) {

@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { z } from "zod";
 
 import { apiClient } from "@/lib/apiClient";
 import { errorMessages } from "@/lib/messages";
-import type { CreatePinInput, Pin, UpdatePinInput } from "@/domain/pins/types";
+import { pinSchema, type CreatePinInput, type Pin, type UpdatePinInput } from "@/domain/pins/types";
 
 export function usePins() {
   const [pins, setPins] = useState<Pin[]>([]);
@@ -15,7 +16,7 @@ export function usePins() {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiClient.get<Pin[]>(`/plans/${planId}/pins`);
+      const result = await apiClient.get(z.array(pinSchema), `/plans/${planId}/pins`);
       setPins(result);
       return result;
     } catch (err) {
@@ -31,7 +32,7 @@ export function usePins() {
       setLoading(true);
       setError(null);
       try {
-        const result = await apiClient.post<Pin>(`/plans/${planId}/pins`, data);
+        const result = await apiClient.post(pinSchema, `/plans/${planId}/pins`, data);
         setPins((prev) => [...prev, result]);
         return result;
       } catch (err) {
@@ -49,7 +50,7 @@ export function usePins() {
       setLoading(true);
       setError(null);
       try {
-        const result = await apiClient.patch<Pin>(`/plans/${planId}/pins/${pinId}`, data);
+        const result = await apiClient.patch(pinSchema, `/plans/${planId}/pins/${pinId}`, data);
         setPins((prev) => prev.map((p) => (p.id === pinId ? result : p)));
         return result;
       } catch (err) {
