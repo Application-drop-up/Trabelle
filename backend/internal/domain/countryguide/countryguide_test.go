@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Application-drop-up/Travellle/internal/domain/countryguide"
+	"github.com/google/uuid"
 )
 
 func TestNewCountryGuide(t *testing.T) {
@@ -44,6 +45,20 @@ func TestNewCountryGuide(t *testing.T) {
 		{
 			name:        "country code too long",
 			countryCode: "THA",
+			countryName: "Thailand",
+			items:       validItems,
+			wantErr:     countryguide.ErrInvalidCountryCode,
+		},
+		{
+			name:        "country code lowercase",
+			countryCode: "th",
+			countryName: "Thailand",
+			items:       validItems,
+			wantErr:     countryguide.ErrInvalidCountryCode,
+		},
+		{
+			name:        "country code digits",
+			countryCode: "12",
 			countryName: "Thailand",
 			items:       validItems,
 			wantErr:     countryguide.ErrInvalidCountryCode,
@@ -96,8 +111,13 @@ func TestNewCountryGuide(t *testing.T) {
 			if len(got.Items) != len(tt.items) {
 				t.Errorf("len(Items) = %d, want %d", len(got.Items), len(tt.items))
 			}
-			if got.ID.String() == "" {
+			if got.ID == uuid.Nil {
 				t.Error("ID was not generated")
+			}
+			for i, item := range got.Items {
+				if item.ID == uuid.Nil {
+					t.Errorf("Items[%d].ID was not generated", i)
+				}
 			}
 		})
 	}
