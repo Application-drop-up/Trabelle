@@ -54,25 +54,46 @@ type CountryGuide struct {
 }
 
 func NewCountryGuide(countryCode, countryName string, items []Item) (*CountryGuide, error) {
-	if len(countryCode) != 2 {
+	if !isValidCountryCode(countryCode) {
 		return nil, ErrInvalidCountryCode
 	}
 	if countryName == "" {
 		return nil, ErrEmptyCountryName
 	}
-	for _, item := range items {
+
+	guideItems := make([]Item, len(items))
+	for i, item := range items {
 		if item.Title == "" {
 			return nil, ErrEmptyItemTitle
 		}
 		if !item.Category.isValid() {
 			return nil, ErrInvalidItemCategory
 		}
+		item.ID = uuid.New()
+		guideItems[i] = item
 	}
 
 	return &CountryGuide{
 		ID:          uuid.New(),
 		CountryCode: countryCode,
 		CountryName: countryName,
-		Items:       items,
+		Items:       guideItems,
 	}, nil
+}
+
+// isValidCountryCode reports whether code is a 2-letter uppercase ISO
+// 3166-1 alpha-2 country code (e.g. "JP", "TH"). This only checks format,
+// not that code names a real country -- validating against the full ISO
+// list would be more rigor than this constructor's job (catching obvious
+// seed-data typos) calls for.
+func isValidCountryCode(code string) bool {
+	if len(code) != 2 {
+		return false
+	}
+	for _, r := range code {
+		if r < 'A' || r > 'Z' {
+			return false
+		}
+	}
+	return true
 }
