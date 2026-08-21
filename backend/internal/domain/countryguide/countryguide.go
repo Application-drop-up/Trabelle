@@ -40,6 +40,7 @@ type Item struct {
 	Title       string
 	Description string
 	URL         string
+	IsMandatory bool
 }
 
 // CountryGuide is a read-only, seeded-by-us collection of practical
