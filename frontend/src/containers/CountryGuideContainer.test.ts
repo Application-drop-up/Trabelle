@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 
 import type { CountryGuide } from "@/domain/countryGuides/types";
 import { useCountryGuideContainer } from "./CountryGuideContainer";
@@ -24,20 +24,21 @@ beforeEach(() => {
 });
 
 describe("useCountryGuideContainer", () => {
-  it("fetches the guide for the given country code on mount", async () => {
+  it("lists guides on mount", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => mockGuide,
+      json: async () => [mockGuide],
     } as Response);
 
-    const { result } = renderHook(() => useCountryGuideContainer("TH"));
+    const { result } = renderHook(() => useCountryGuideContainer());
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.guideVM).toEqual({
+    expect(result.current.guideVMs).toHaveLength(1);
+    expect(result.current.guideVMs[0]).toEqual({
       id: "guide-1",
       countryCode: "TH",
       countryName: "Thailand",
@@ -52,14 +53,34 @@ describe("useCountryGuideContainer", () => {
         },
       ],
     });
-    expect(result.current.error).toBeNull();
+    expect(result.current.selectedGuideVM).toBeNull();
+  });
+
+  it("fetches the guide detail when a code is selected", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => mockGuide,
+    } as Response);
+
+    const { result } = renderHook(() => useCountryGuideContainer());
+
+    act(() => {
+      result.current.onSelectCode("TH");
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedGuideVM).not.toBeNull();
+    });
+
+    expect(result.current.selectedGuideVM?.countryCode).toBe("TH");
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("/api/v1/country-guides/TH"),
       expect.anything(),
     );
   });
 
-  it("exposes an error when the fetch fails", async () => {
+  it("exposes an error when the selected guide fetch fails", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 404,
@@ -67,22 +88,16 @@ describe("useCountryGuideContainer", () => {
       json: async () => ({ message: "country guide not found" }),
     } as Response);
 
-    const { result } = renderHook(() => useCountryGuideContainer("ZZ"));
+    const { result } = renderHook(() => useCountryGuideContainer());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+    act(() => {
+      result.current.onSelectCode("ZZ");
     });
 
-    expect(result.current.guideVM).toBeNull();
-    expect(result.current.error).toBe("country guide not found");
-  });
+    await waitFor(() => {
+      expect(result.current.error).toBe("country guide not found");
+    });
 
-  it("does not fetch when countryCode is empty", () => {
-    global.fetch = jest.fn();
-
-    const { result } = renderHook(() => useCountryGuideContainer(""));
-
-    expect(result.current.guideVM).toBeNull();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(result.current.selectedGuideVM).toBeNull();
   });
 });

@@ -1,31 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useCountryGuides } from "@/hooks/useCountryGuides";
 import { toCountryGuideViewModel, type CountryGuideViewModel } from "@/mappers/countryGuideMapper";
 
 type UseCountryGuideContainerReturn = {
-  guideVM: CountryGuideViewModel | null;
+  guideVMs: CountryGuideViewModel[];
+  selectedCode: string;
+  selectedGuideVM: CountryGuideViewModel | null;
   loading: boolean;
   error: string | null;
+  onSelectCode: (countryCode: string) => void;
 };
 
-export function useCountryGuideContainer(countryCode: string): UseCountryGuideContainerReturn {
-  const { loading, error, getCountryGuide } = useCountryGuides();
-  const [guideVM, setGuideVM] = useState<CountryGuideViewModel | null>(null);
+export function useCountryGuideContainer(): UseCountryGuideContainerReturn {
+  const { guides, loading, error, listCountryGuides, getCountryGuide } = useCountryGuides();
+  const [selectedCode, setSelectedCode] = useState("");
+  const [selectedGuideVM, setSelectedGuideVM] = useState<CountryGuideViewModel | null>(null);
 
   useEffect(() => {
-    if (!countryCode) {
-      setGuideVM(null);
+    listCountryGuides();
+  }, [listCountryGuides]);
+
+  const onSelectCode = useCallback((countryCode: string) => {
+    setSelectedCode(countryCode);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCode) {
+      setSelectedGuideVM(null);
       return;
     }
-    getCountryGuide(countryCode).then((guide) => {
-      if (guide) setGuideVM(toCountryGuideViewModel(guide));
+    getCountryGuide(selectedCode).then((guide) => {
+      if (guide) setSelectedGuideVM(toCountryGuideViewModel(guide));
     });
-  }, [countryCode, getCountryGuide]);
+  }, [selectedCode, getCountryGuide]);
 
-  return { guideVM, loading, error };
+  const guideVMs = guides.map(toCountryGuideViewModel);
+
+  return { guideVMs, selectedCode, selectedGuideVM, loading, error, onSelectCode };
 }
 
 export type { CountryGuideViewModel };
