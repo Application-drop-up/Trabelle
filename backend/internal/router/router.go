@@ -72,6 +72,8 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev b
 		r.Post("/login/verify", authHandler.LoginVerify)
 		r.Post("/logout", authHandler.Logout)
 		r.Get("/user/me", authHandler.Me)
+
+		r.Post("/plans/{share_token}/publish", planHandler.Publish)
 	})
 
 	return mux
