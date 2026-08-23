@@ -15,6 +15,7 @@ type planResponse struct {
 	ID         string        `json:"id"`
 	ShareToken string        `json:"share_token"`
 	Title      string        `json:"title"`
+	IsPublic   bool          `json:"is_public"`
 	Pins       []interface{} `json:"pins"`
 }
 
@@ -102,6 +103,74 @@ func TestPlanHandler_CreateAndGet(t *testing.T) {
 
 		if w.Code != http.StatusNotFound {
 			t.Errorf("GET /plans/{share_token} (unknown) status = %d, want %d", w.Code, http.StatusNotFound)
+		}
+	})
+}
+
+func TestPlanHandler_Publish(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.NewTestDB(t)
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
+
+	t.Run("makes the plan public", func(t *testing.T) {
+		t.Parallel()
+
+		body, _ := json.Marshal(map[string]string{"title": "Trip to Osaka"})
+		createReq := httptest.NewRequest(http.MethodPost, "/plans", bytes.NewReader(body))
+		createReq.Header.Set("Content-Type", "application/json")
+		createW := httptest.NewRecorder()
+		r.ServeHTTP(createW, createReq)
+
+		var created planResponse
+		if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM plans WHERE id = $1", created.ID) })
+
+		if created.IsPublic {
+			t.Fatal("newly created plan IsPublic = true, want false")
+		}
+
+		publishReq := httptest.NewRequest(http.MethodPost, "/api/v1/plans/"+created.ShareToken+"/publish", nil)
+		publishW := httptest.NewRecorder()
+		r.ServeHTTP(publishW, publishReq)
+
+		if publishW.Code != http.StatusOK {
+			t.Fatalf("POST /api/v1/plans/{share_token}/publish status = %d, want %d, body: %s", publishW.Code, http.StatusOK, publishW.Body.String())
+		}
+
+		var published planResponse
+		if err := json.Unmarshal(publishW.Body.Bytes(), &published); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if !published.IsPublic {
+			t.Error("after Publish(), IsPublic = false, want true")
+		}
+
+		getReq := httptest.NewRequest(http.MethodGet, "/plans/"+created.ShareToken, nil)
+		getW := httptest.NewRecorder()
+		r.ServeHTTP(getW, getReq)
+
+		var fetched planResponse
+		if err := json.Unmarshal(getW.Body.Bytes(), &fetched); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if !fetched.IsPublic {
+			t.Error("after Publish(), GET /plans/{share_token} IsPublic = false, want true")
+		}
+	})
+
+	t.Run("returns 404 for an unknown share token", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/plans/does-not-exist/publish", nil)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("POST /api/v1/plans/{share_token}/publish (unknown) status = %d, want %d", w.Code, http.StatusNotFound)
 		}
 	})
 }
