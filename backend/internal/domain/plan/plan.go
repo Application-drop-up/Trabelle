@@ -21,3 +21,14 @@ type Plan struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
+
+// IsViewableWithoutToken reports whether this Plan can be read without its
+// ShareToken. ShareToken-based access (for an in-progress trip shared with
+// specific people) and public access (a finished trip published for anyone,
+// including strangers, to view) are separate concerns belonging to
+// different phases of a Plan's lifecycle -- this method exists so callers
+// check Plan's own rule about the latter, rather than reading IsPublic
+// directly.
+func (plan *Plan) IsViewableWithoutToken() bool {
+	return plan.IsPublic
+}
