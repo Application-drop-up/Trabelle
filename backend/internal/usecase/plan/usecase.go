@@ -40,6 +40,23 @@ func (useCase *UseCase) GetPlanByShareToken(ctx context.Context, token string) (
 	return useCase.repo.FindByShareToken(ctx, token)
 }
 
+// PublishPlan makes a Plan viewable without its ShareToken. The caller must
+// already hold the ShareToken to publish it -- publishing is an action
+// taken from within the token-gated editing flow, not a separate
+// credential.
+func (useCase *UseCase) PublishPlan(ctx context.Context, shareToken string) (*domain.Plan, error) {
+	plan, err := useCase.repo.FindByShareToken(ctx, shareToken)
+	if err != nil {
+		return nil, err
+	}
+
+	plan.IsPublic = true
+	if err := useCase.repo.UpdateVisibility(ctx, plan); err != nil {
+		return nil, fmt.Errorf("publish plan: %w", err)
+	}
+	return plan, nil
+}
+
 func generateShareToken() (string, error) {
 	tokenBytes := make([]byte, 16)
 	if _, err := rand.Read(tokenBytes); err != nil {
