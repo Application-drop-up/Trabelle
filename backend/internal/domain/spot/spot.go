@@ -34,3 +34,9 @@ type Spot struct {
 	FirstPlanID       uuid.UUID
 	FirstPlanIsPublic bool
 }
+
+// IsAttributionVisible reports whether FirstPlanID is safe to expose. See
+// the FirstPlanID field comment for why this check exists.
+func (spot *Spot) IsAttributionVisible() bool {
+	return spot.FirstPlanIsPublic
+}
