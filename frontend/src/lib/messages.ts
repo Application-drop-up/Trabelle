@@ -26,4 +26,8 @@ export const errorMessages = {
     fetchCurrentUser: "Failed to fetch current user",
     logout: "Failed to log out",
   },
+  countryGuides: {
+    list: "Failed to fetch country guides",
+    get: "Failed to fetch country guide",
+  },
 } as const;
