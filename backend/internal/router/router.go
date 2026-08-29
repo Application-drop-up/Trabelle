@@ -7,11 +7,11 @@ import (
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/external"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/notification"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
-	noteuc "github.com/Application-drop-up/Travellle/internal/usecase/note"
-	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
-	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
-	spotuc "github.com/Application-drop-up/Travellle/internal/usecase/spot"
-	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
+	"github.com/Application-drop-up/Travellle/internal/usecase/note"
+	"github.com/Application-drop-up/Travellle/internal/usecase/pin"
+	"github.com/Application-drop-up/Travellle/internal/usecase/plan"
+	"github.com/Application-drop-up/Travellle/internal/usecase/spot"
+	"github.com/Application-drop-up/Travellle/internal/usecase/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -21,14 +21,14 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev b
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
-	pinUseCase := pinuc.New(pinRepo)
-	noteUseCase := noteuc.New(noteRepo)
+	pinUseCase := pin.New(pinRepo)
+	noteUseCase := note.New(noteRepo)
 
-	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase)
+	planHandler := handler.NewPlanHandler(plan.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase)
 	pinHandler := handler.NewPinHandler(pinUseCase)
 	noteHandler := handler.NewNoteHandler(noteUseCase)
-	spotHandler := handler.NewSpotHandler(spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey), persistence.NewSpotRepository(db)))
-	authHandler := handler.NewAuthHandler(useruc.New(
+	spotHandler := handler.NewSpotHandler(spot.New(external.NewGooglePlacesClient(googlePlacesAPIKey), persistence.NewSpotRepository(db)))
+	authHandler := handler.NewAuthHandler(user.New(
 		persistence.NewUserRepository(db),
 		persistence.NewSessionRepository(db),
 		persistence.NewLoginOTPRepository(db),
@@ -62,18 +62,20 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev b
 	mux.Patch("/plans/{plan_id}/pins/{pin_id}/notes/{note_id}", noteHandler.Update)
 	mux.Delete("/plans/{plan_id}/pins/{pin_id}/notes/{note_id}", noteHandler.Delete)
 
-	mux.Route("/api/v1", func(r chi.Router) {
-		r.Post("/user/register", authHandler.Register)
-		r.Get("/user/{id}", authHandler.GetByID)
-		r.Patch("/user/{id}", authHandler.Update)
-		r.Delete("/user/{id}", authHandler.Delete)
+	mux.Route("/api/v1", func(routing chi.Router) {
+		routing.Post("/user/register", authHandler.Register)
+		routing.Get("/user/{id}", authHandler.GetByID)
+		routing.Patch("/user/{id}", authHandler.Update)
+		routing.Delete("/user/{id}", authHandler.Delete)
 
-		r.Post("/login", authHandler.LoginStart)
-		r.Post("/login/verify", authHandler.LoginVerify)
-		r.Post("/logout", authHandler.Logout)
-		r.Get("/user/me", authHandler.Me)
+		routing.Post("/login", authHandler.LoginStart)
+		routing.Post("/login/verify", authHandler.LoginVerify)
+		routing.Post("/logout", authHandler.Logout)
+		routing.Get("/user/me", authHandler.Me)
 
-		r.Post("/plans/{share_token}/publish", planHandler.Publish)
+		routing.Post("/plans/{share_token}/publish", planHandler.Publish)
+
+		routing.Post("/user/{id}/spot/share", spotHandler.Save)
 	})
 
 	return mux
