@@ -12,40 +12,37 @@ import (
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/external"
 )
 
-func newTestClient(t *testing.T, handler http.HandlerFunc) *external.GooglePlacesClient {
+func newTestTomTomClient(t *testing.T, handler http.HandlerFunc) *external.TomTomClient {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	return external.NewGooglePlacesClientWithURL(srv.URL, "test-api-key")
+	return external.NewTomTomClientWithURL(srv.URL, "test-api-key")
 }
 
-func TestGooglePlacesClient_Search(t *testing.T) {
+func TestTomTomClient_Search(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns spots on success", func(t *testing.T) {
 		t.Parallel()
 
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			if r.Header.Get("X-Goog-Api-Key") == "" {
-				t.Error("X-Goog-Api-Key header is missing")
-			}
-			if r.Header.Get("X-Goog-FieldMask") == "" {
-				t.Error("X-Goog-FieldMask header is missing")
+			if r.URL.Query().Get("key") == "" {
+				t.Error("key query parameter is missing")
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"places": []map[string]any{
+				"results": []map[string]any{
 					{
-						"id":               "ChIJ5eTFBkqLGGARsV4PF3rDVAA",
-						"displayName":      map[string]string{"text": "Tokyo Tower"},
-						"formattedAddress": "4 Chome-2-8 Shibakoen, Minato City, Tokyo",
-						"location":         map[string]float64{"latitude": 35.6585805, "longitude": 139.7454329},
+						"id":       "826003003559627",
+						"poi":      map[string]string{"name": "Tokyo Tower"},
+						"address":  map[string]string{"freeformAddress": "4 Chome-2-8 Shibakoen, Minato City, Tokyo"},
+						"position": map[string]float64{"lat": 35.6585805, "lon": 139.7454329},
 					},
 				},
 			})
 		}
 
-		client := newTestClient(t, handler)
+		client := newTestTomTomClient(t, handler)
 		spots, err := client.Search(context.Background(), "Tokyo Tower")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -56,45 +53,45 @@ func TestGooglePlacesClient_Search(t *testing.T) {
 		if spots[0].Name != "Tokyo Tower" {
 			t.Errorf("Name = %q, want %q", spots[0].Name, "Tokyo Tower")
 		}
-		if spots[0].PlaceID.String() != "ChIJ5eTFBkqLGGARsV4PF3rDVAA" {
-			t.Errorf("PlaceID = %q, want ChIJ5eTFBkqLGGARsV4PF3rDVAA", spots[0].PlaceID)
+		if spots[0].PlaceID.String() != "826003003559627" {
+			t.Errorf("PlaceID = %q, want 826003003559627", spots[0].PlaceID)
 		}
 	})
 
 	t.Run("empty query returns ErrInvalidQuery", func(t *testing.T) {
 		t.Parallel()
 
-		client := external.NewGooglePlacesClient("test-api-key")
+		client := external.NewTomTomClient("test-api-key")
 		_, err := client.Search(context.Background(), "")
 		if !errors.Is(err, spot.ErrInvalidQuery) {
 			t.Errorf("got %v, want ErrInvalidQuery", err)
 		}
 	})
 
-	t.Run("skips place with invalid location", func(t *testing.T) {
+	t.Run("skips result with invalid location", func(t *testing.T) {
 		t.Parallel()
 
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"places": []map[string]any{
+				"results": []map[string]any{
 					{
-						"id":               "valid-id",
-						"displayName":      map[string]string{"text": "Valid Place"},
-						"formattedAddress": "somewhere",
-						"location":         map[string]float64{"latitude": 35.0, "longitude": 139.0},
+						"id":       "valid-id",
+						"poi":      map[string]string{"name": "Valid Place"},
+						"address":  map[string]string{"freeformAddress": "somewhere"},
+						"position": map[string]float64{"lat": 35.0, "lon": 139.0},
 					},
 					{
-						"id":               "invalid-id",
-						"displayName":      map[string]string{"text": "Invalid Place"},
-						"formattedAddress": "somewhere",
-						"location":         map[string]float64{"latitude": 999.0, "longitude": 999.0},
+						"id":       "invalid-id",
+						"poi":      map[string]string{"name": "Invalid Place"},
+						"address":  map[string]string{"freeformAddress": "somewhere"},
+						"position": map[string]float64{"lat": 999.0, "lon": 999.0},
 					},
 				},
 			})
 		}
 
-		client := newTestClient(t, handler)
+		client := newTestTomTomClient(t, handler)
 		spots, err := client.Search(context.Background(), "test")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -111,7 +108,7 @@ func TestGooglePlacesClient_Search(t *testing.T) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 		}
 
-		client := newTestClient(t, handler)
+		client := newTestTomTomClient(t, handler)
 		_, err := client.Search(context.Background(), "Tokyo")
 		if err == nil {
 			t.Error("expected error for non-200 response, got nil")
