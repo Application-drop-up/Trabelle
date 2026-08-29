@@ -23,9 +23,9 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
+	apiKey := os.Getenv("TOMTOM_API_KEY")
 	if apiKey == "" {
-		log.Fatal("GOOGLE_PLACES_API_KEY is not set")
+		log.Fatal("TOMTOM_API_KEY is not set")
 	}
 
 	origins := os.Getenv("CORS_ALLOWED_ORIGINS")

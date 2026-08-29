@@ -22,17 +22,17 @@ This app is designed to solve specific pain points for three different types of 
 * **Rich Ecosystem:** Leverages mature libraries like `@react-google-maps/api` to integrate efficiently with Google Maps APIs, allowing focus on core product features rather than low-level map implementations.
 
 ### Backend: Go
-* **High Performance & Concurrency:** Ideal for a scalable API server that handles numerous concurrent requests, particularly for external API calls (like Google Places API) and future real-time collaborative features.
+* **High Performance & Concurrency:** Ideal for a scalable API server that handles numerous concurrent requests, particularly for external API calls (like the TomTom Search API) and future real-time collaborative features.
 * **Strict Type System:** Ensures type safety from backend to frontend, reducing runtime errors and improving codebase maintainability in the long term.
 * **Deployment Efficiency:** Compiles to a single binary for fast and straightforward deployment, making it perfect for a modern, containerized infrastructure.
 
 ### Infrastructure & APIs
-* **Google Maps API / Google Places API:** Chosen for its industry-standard accuracy and comprehensive global point-of-interest (POI) database, which is critical for providing a seamless auto-complete and mapping experience.
+* **TomTom Search API:** Used for spot auto-complete and point-of-interest (POI) lookup, providing a seamless search experience for tourist spots.
 
 ## 📅 Roadmap
 
 ### MVP
-- [x] Spot auto-complete (Google Places API)
+- [x] Spot auto-complete (TomTom Search API)
 - [x] Categorized pin management (Color-coded for breakfast, dinner, etc.)
 - [x] Notes linked to specific spots
 - [x] Read-only URL sharing feature

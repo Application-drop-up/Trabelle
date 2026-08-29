@@ -417,7 +417,7 @@ paths:
     get:
       tags:
         - spots
-      summary: Search spots using Google Places API
+      summary: Search spots using TomTom Search API
       operationId: searchSpots
       parameters:
         - name: query
@@ -443,7 +443,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: Internal server error or Google Places API error
+          description: Internal server error or TomTom Search API error
           content:
             application/json:
               schema:
@@ -663,8 +663,8 @@ components:
       properties:
         place_id:
           type: string
-          description: Google Places API place ID
-          example: "ChIJ51cu8IcbXWARiRtXIothAS4"
+          description: TomTom Search API result ID
+          example: "826003003559627"
         name:
           type: string
           example: "Tokyo Tower"

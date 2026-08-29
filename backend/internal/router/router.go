@@ -17,11 +17,11 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev bool) *chi.Mux {
+func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *chi.Mux {
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
-	spotUseCase := spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey), persistence.NewSpotRepository(db))
+	spotUseCase := spotuc.New(external.NewTomTomClient(tomTomAPIKey), persistence.NewSpotRepository(db))
 
 	pinUseCase := pinuc.New(pinRepo, spotUseCase)
 	noteUseCase := noteuc.New(noteRepo)

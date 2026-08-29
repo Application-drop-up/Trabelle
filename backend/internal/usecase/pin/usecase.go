@@ -29,7 +29,7 @@ type CreateInput struct {
 	// PlaceID and Address are optional: they're only set when the Pin was
 	// created from a Spot search result, and are used to cache that Spot
 	// (see saveSpot) so future searches can reuse it without calling
-	// Google Places again.
+	// TomTom again.
 	PlaceID string
 	Address string
 }
