@@ -74,8 +74,6 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev b
 		routing.Get("/user/me", authHandler.Me)
 
 		routing.Post("/plans/{share_token}/publish", planHandler.Publish)
-
-		routing.Post("/user/{id}/spot/share", spotHandler.Save)
 	})
 
 	return mux
