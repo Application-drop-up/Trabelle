@@ -5,15 +5,18 @@ import (
 	"fmt"
 
 	domain "github.com/Application-drop-up/Travellle/internal/domain/pin"
+	spotdomain "github.com/Application-drop-up/Travellle/internal/domain/spot"
+	spotuc "github.com/Application-drop-up/Travellle/internal/usecase/spot"
 	"github.com/google/uuid"
 )
 
 type UseCase struct {
-	repo domain.Repository
+	repo        domain.Repository
+	spotUseCase *spotuc.UseCase
 }
 
-func New(repo domain.Repository) *UseCase {
-	return &UseCase{repo: repo}
+func New(repo domain.Repository, spotUseCase *spotuc.UseCase) *UseCase {
+	return &UseCase{repo: repo, spotUseCase: spotUseCase}
 }
 
 type CreateInput struct {
@@ -23,6 +26,12 @@ type CreateInput struct {
 	Longitude float64
 	Category  domain.Category
 	Colour    string
+	// PlaceID and Address are optional: they're only set when the Pin was
+	// created from a Spot search result, and are used to cache that Spot
+	// (see saveSpot) so future searches can reuse it without calling
+	// Google Places again.
+	PlaceID string
+	Address string
 }
 
 type UpdateInput struct {
@@ -44,7 +53,37 @@ func (useCase *UseCase) CreatePin(ctx context.Context, input CreateInput) (*doma
 	if err := useCase.repo.Create(ctx, pin); err != nil {
 		return nil, fmt.Errorf("create pin: %w", err)
 	}
+
+	if input.PlaceID != "" {
+		useCase.saveSpot(ctx, input)
+	}
+
 	return pin, nil
+}
+
+// saveSpot best-effort persists the Spot behind a newly created Pin so
+// future searches can reuse it. Errors are intentionally swallowed --
+// caching a Spot (e.g. it may already be known) is a side effect of
+// creating a Pin, not the operation the caller asked for, so it must never
+// fail Pin creation.
+func (useCase *UseCase) saveSpot(ctx context.Context, input CreateInput) {
+	placeID, err := spotdomain.NewPlaceID(input.PlaceID)
+	if err != nil {
+		return
+	}
+	location, err := spotdomain.NewLocation(input.Latitude, input.Longitude)
+	if err != nil {
+		return
+	}
+
+	_ = useCase.spotUseCase.SaveSpot(ctx, &spotdomain.Spot{
+		ID:          uuid.New(),
+		PlaceID:     placeID,
+		Name:        input.Name,
+		Address:     input.Address,
+		Location:    location,
+		FirstPlanID: input.PlanID,
+	})
 }
 
 func (useCase *UseCase) UpdatePin(ctx context.Context, planID, pinID uuid.UUID, input UpdateInput) (*domain.Pin, error) {
