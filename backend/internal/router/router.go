@@ -7,6 +7,7 @@ import (
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/external"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/notification"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
+	countryguideuc "github.com/Application-drop-up/Travellle/internal/usecase/countryguide"
 	noteuc "github.com/Application-drop-up/Travellle/internal/usecase/note"
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
 	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
@@ -36,6 +37,7 @@ func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *
 		persistence.NewLoginOTPRepository(db),
 		notification.NewLogEmailSender(),
 	), isDev)
+	countryGuideHandler := handler.NewCountryGuideHandler(countryguideuc.New(persistence.NewCountryGuideRepository(db)))
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
@@ -76,6 +78,9 @@ func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *
 		r.Get("/user/me", authHandler.Me)
 
 		r.Post("/plans/{share_token}/publish", planHandler.Publish)
+
+		r.Get("/country-guides", countryGuideHandler.List)
+		r.Get("/country-guides/{code}", countryGuideHandler.GetByCode)
 	})
 
 	return mux
