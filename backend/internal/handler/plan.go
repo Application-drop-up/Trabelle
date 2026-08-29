@@ -31,6 +31,7 @@ type planResponse struct {
 	ID         string         `json:"id"`
 	ShareToken string         `json:"share_token"`
 	Title      string         `json:"title"`
+	IsPublic   bool           `json:"is_public"`
 	Pins       []pinWithNotes `json:"pins"`
 	CreatedAt  string         `json:"created_at"`
 	UpdatedAt  string         `json:"updated_at"`
@@ -46,6 +47,7 @@ func toPlanResponse(plan *domain.Plan, pins []pinWithNotes) planResponse {
 		ID:         plan.ID.String(),
 		ShareToken: plan.ShareToken,
 		Title:      plan.Title,
+		IsPublic:   plan.IsPublic,
 		Pins:       pins,
 		CreatedAt:  plan.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt:  plan.UpdatedAt.UTC().Format(time.RFC3339),
@@ -106,4 +108,20 @@ func (planHandler *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *htt
 	}
 
 	writeJSON(rw, http.StatusOK, toPlanResponse(plan, pins))
+}
+
+func (planHandler *PlanHandler) Publish(rw http.ResponseWriter, req *http.Request) {
+	token := chi.URLParam(req, "share_token")
+
+	plan, err := planHandler.planUseCase.PublishPlan(req.Context(), token)
+	if errors.Is(err, domain.ErrNotFound) {
+		writeError(rw, http.StatusNotFound, "plan not found")
+		return
+	}
+	if err != nil {
+		writeError(rw, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	writeJSON(rw, http.StatusOK, toPlanResponse(plan, []pinWithNotes{}))
 }
