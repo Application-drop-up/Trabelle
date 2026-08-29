@@ -11,17 +11,21 @@ import (
 
 // mockSearcher は domain.Searcher のテスト用実装
 type mockSearcher struct {
-	spots []*domain.Spot
-	err   error
+	spots  []*domain.Spot
+	err    error
+	called bool
 }
 
 func (m *mockSearcher) Search(_ context.Context, _ string) ([]*domain.Spot, error) {
+	m.called = true
 	return m.spots, m.err
 }
 
 // mockRepository は domain.Repository のテスト用実装
 type mockRepository struct {
-	saveErr error
+	saveErr     error
+	searchSpots []*domain.Spot
+	searchErr   error
 }
 
 func (m *mockRepository) Save(_ context.Context, _ *domain.Spot) error {
@@ -33,7 +37,7 @@ func (m *mockRepository) FindByPlaceID(_ context.Context, _ domain.PlaceID) (*do
 }
 
 func (m *mockRepository) Search(_ context.Context, _ string) ([]*domain.Spot, error) {
-	return nil, nil
+	return m.searchSpots, m.searchErr
 }
 
 func TestUseCase_SearchSpots(t *testing.T) {
@@ -102,6 +106,36 @@ func TestUseCase_SearchSpots(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("returns local results without calling the external searcher", func(t *testing.T) {
+		t.Parallel()
+
+		searcher := &mockSearcher{spots: []*domain.Spot{dummySpot}}
+		repo := &mockRepository{searchSpots: []*domain.Spot{dummySpot}}
+		useCase := spotuc.New(searcher, repo)
+
+		got, err := useCase.SearchSpots(context.Background(), "Tokyo Tower")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(got) != 1 {
+			t.Fatalf("got %d spots, want 1", len(got))
+		}
+		if searcher.called {
+			t.Error("external searcher was called even though local results were found")
+		}
+	})
+
+	t.Run("propagates local repository search error", func(t *testing.T) {
+		t.Parallel()
+
+		useCase := spotuc.New(&mockSearcher{}, &mockRepository{searchErr: errors.New("db error")})
+
+		_, err := useCase.SearchSpots(context.Background(), "Tokyo Tower")
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
 }
 
 func TestUseCase_SaveSpot(t *testing.T) {
