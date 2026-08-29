@@ -38,9 +38,9 @@ This app is designed to solve specific pain points for three different types of 
 - [x] Read-only URL sharing feature
 
 ### v2
-- [ ] User authentication & registration
+- [x] User authentication & registration
 - [ ] Pre-travel essential information (Country-specific guides)
-- [ ] Reusing spot information from other users
+- [x] Reusing spot information from other users
 - [ ] Collaborative plan editing
 
 ### v3
