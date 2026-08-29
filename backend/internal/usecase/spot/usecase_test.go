@@ -19,6 +19,23 @@ func (m *mockSearcher) Search(_ context.Context, _ string) ([]*domain.Spot, erro
 	return m.spots, m.err
 }
 
+// mockRepository は domain.Repository のテスト用実装
+type mockRepository struct {
+	saveErr error
+}
+
+func (m *mockRepository) Save(_ context.Context, _ *domain.Spot) error {
+	return m.saveErr
+}
+
+func (m *mockRepository) FindByPlaceID(_ context.Context, _ domain.PlaceID) (*domain.Spot, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockRepository) Search(_ context.Context, _ string) ([]*domain.Spot, error) {
+	return nil, nil
+}
+
 func TestUseCase_SearchSpots(t *testing.T) {
 	t.Parallel()
 
@@ -32,12 +49,12 @@ func TestUseCase_SearchSpots(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		query      string
-		mockSpots  []*domain.Spot
-		mockErr    error
-		wantLen    int
-		wantErr    error
+		name      string
+		query     string
+		mockSpots []*domain.Spot
+		mockErr   error
+		wantLen   int
+		wantErr   error
 	}{
 		{
 			name:      "returns spots on success",
@@ -68,7 +85,7 @@ func TestUseCase_SearchSpots(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			useCase := spotuc.New(&mockSearcher{spots: tt.mockSpots, err: tt.mockErr})
+			useCase := spotuc.New(&mockSearcher{spots: tt.mockSpots, err: tt.mockErr}, &mockRepository{})
 			got, err := useCase.SearchSpots(context.Background(), tt.query)
 
 			if tt.wantErr != nil {
@@ -85,4 +102,37 @@ func TestUseCase_SearchSpots(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUseCase_SaveSpot(t *testing.T) {
+	t.Parallel()
+
+	location, _ := domain.NewLocation(35.6895, 139.6917)
+	placeID, _ := domain.NewPlaceID("ChIJ5eTFBkqLGGARsV4PF3rDVAA")
+	dummySpot := &domain.Spot{
+		PlaceID:  placeID,
+		Name:     "Tokyo Tower",
+		Address:  "4 Chome-2-8 Shibakoen, Minato City, Tokyo",
+		Location: location,
+	}
+
+	t.Run("saves successfully", func(t *testing.T) {
+		t.Parallel()
+
+		useCase := spotuc.New(&mockSearcher{}, &mockRepository{})
+		if err := useCase.SaveSpot(context.Background(), dummySpot); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("propagates repository error", func(t *testing.T) {
+		t.Parallel()
+
+		useCase := spotuc.New(&mockSearcher{}, &mockRepository{saveErr: errors.New("db error")})
+
+		err := useCase.SaveSpot(context.Background(), dummySpot)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
 }
