@@ -9,6 +9,7 @@ import (
 
 	"github.com/Application-drop-up/Travellle/internal/router"
 	"github.com/Application-drop-up/Travellle/internal/testutil"
+	"github.com/google/uuid"
 )
 
 type pinResponse struct {
@@ -162,6 +163,103 @@ func TestPinHandler_CreateListUpdateDelete(t *testing.T) {
 		r.ServeHTTP(deleteAgainW, deleteAgainReq)
 		if deleteAgainW.Code != http.StatusNotFound {
 			t.Errorf("DELETE (already deleted) status = %d, want %d", deleteAgainW.Code, http.StatusNotFound)
+		}
+	})
+}
+
+func createPin(t *testing.T, r http.Handler, planID string, body map[string]any) *httptest.ResponseRecorder {
+	t.Helper()
+
+	raw, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/plans/"+planID+"/pins", bytes.NewReader(raw))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	return w
+}
+
+func TestPinHandler_Create_SavesSpot(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.NewTestDB(t)
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
+
+	planID := createTestPlan(t, r, "Pin Spot Persistence Test Plan")
+	t.Cleanup(func() { _, _ = db.Exec("DELETE FROM plans WHERE id = $1", planID) })
+
+	t.Run("saves the Spot when place_id is provided", func(t *testing.T) {
+		t.Parallel()
+
+		placeID := uuid.New().String()
+		w := createPin(t, r, planID, map[string]any{
+			"name": "Tokyo Tower", "latitude": 35.6586, "longitude": 139.7454,
+			"category": "sightseeing", "colour": "#FF5733",
+			"place_id": placeID, "address": "4 Chome-2-8 Shibakoen, Minato City, Tokyo",
+		})
+
+		if w.Code != http.StatusCreated {
+			t.Fatalf("status = %d, want %d, body: %s", w.Code, http.StatusCreated, w.Body.String())
+		}
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM spots WHERE place_id = $1", placeID) })
+
+		var name, address string
+		err := db.QueryRow("SELECT name, address FROM spots WHERE place_id = $1", placeID).Scan(&name, &address)
+		if err != nil {
+			t.Fatalf("expected a Spot to be saved for place_id %q: %v", placeID, err)
+		}
+		if name != "Tokyo Tower" {
+			t.Errorf("Name = %q, want %q", name, "Tokyo Tower")
+		}
+		if address != "4 Chome-2-8 Shibakoen, Minato City, Tokyo" {
+			t.Errorf("Address = %q, want %q", address, "4 Chome-2-8 Shibakoen, Minato City, Tokyo")
+		}
+	})
+
+	t.Run("does not save a Spot when place_id is absent", func(t *testing.T) {
+		t.Parallel()
+
+		// Uses its own Plan so the spots count below isn't affected by
+		// sibling subtests inserting spots under the shared planID above.
+		isolatedPlanID := createTestPlan(t, r, "Pin Spot Persistence Isolated Plan")
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM plans WHERE id = $1", isolatedPlanID) })
+
+		w := createPin(t, r, isolatedPlanID, map[string]any{
+			"name": "No Place Pin", "latitude": 1.0, "longitude": 1.0,
+			"category": "other", "colour": "#000000",
+		})
+
+		if w.Code != http.StatusCreated {
+			t.Fatalf("status = %d, want %d, body: %s", w.Code, http.StatusCreated, w.Body.String())
+		}
+
+		var count int
+		if err := db.QueryRow("SELECT COUNT(*) FROM spots WHERE first_plan_id = $1", isolatedPlanID).Scan(&count); err != nil {
+			t.Fatalf("failed to count spots: %v", err)
+		}
+		if count != 0 {
+			t.Errorf("spots count = %d, want 0", count)
+		}
+	})
+
+	t.Run("creates the Pin even when the Spot already exists", func(t *testing.T) {
+		t.Parallel()
+
+		placeID := uuid.New().String()
+		body := map[string]any{
+			"name": "Duplicate Spot", "latitude": 2.0, "longitude": 2.0,
+			"category": "restaurant", "colour": "#123456",
+			"place_id": placeID, "address": "Some Address",
+		}
+
+		first := createPin(t, r, planID, body)
+		if first.Code != http.StatusCreated {
+			t.Fatalf("first pin status = %d, want %d, body: %s", first.Code, http.StatusCreated, first.Body.String())
+		}
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM spots WHERE place_id = $1", placeID) })
+
+		second := createPin(t, r, planID, body)
+		if second.Code != http.StatusCreated {
+			t.Errorf("second pin status = %d, want %d, body: %s", second.Code, http.StatusCreated, second.Body.String())
 		}
 	})
 }

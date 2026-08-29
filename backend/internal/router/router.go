@@ -21,13 +21,15 @@ func New(db *sql.DB, googlePlacesAPIKey string, allowedOrigins []string, isDev b
 	pinRepo := persistence.NewPinRepository(db)
 	noteRepo := persistence.NewNoteRepository(db)
 
-	pinUseCase := pinuc.New(pinRepo)
+	spotUseCase := spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey), persistence.NewSpotRepository(db))
+
+	pinUseCase := pinuc.New(pinRepo, spotUseCase)
 	noteUseCase := noteuc.New(noteRepo)
 
 	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase)
 	pinHandler := handler.NewPinHandler(pinUseCase)
 	noteHandler := handler.NewNoteHandler(noteUseCase)
-	spotHandler := handler.NewSpotHandler(spotuc.New(external.NewGooglePlacesClient(googlePlacesAPIKey), persistence.NewSpotRepository(db)))
+	spotHandler := handler.NewSpotHandler(spotUseCase)
 	authHandler := handler.NewAuthHandler(useruc.New(
 		persistence.NewUserRepository(db),
 		persistence.NewSessionRepository(db),
