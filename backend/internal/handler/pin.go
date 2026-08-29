@@ -27,6 +27,10 @@ type createPinRequest struct {
 	Longitude float64 `json:"longitude"`
 	Category  string  `json:"category"`
 	Colour    string  `json:"colour"`
+	// PlaceID and Address are optional: set when the Pin is created from a
+	// Spot search result, so the Spot can be cached for future searches.
+	PlaceID string `json:"place_id"`
+	Address string `json:"address"`
 }
 
 type updatePinRequest struct {
@@ -106,6 +110,8 @@ func (pinHandler *PinHandler) Create(rw http.ResponseWriter, req *http.Request) 
 		Longitude: body.Longitude,
 		Category:  cat,
 		Colour:    body.Colour,
+		PlaceID:   body.PlaceID,
+		Address:   body.Address,
 	})
 	if errors.Is(err, plandomain.ErrNotFound) {
 		writeError(rw, http.StatusNotFound, "plan not found")
