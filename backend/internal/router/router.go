@@ -11,6 +11,7 @@ import (
 	noteuc "github.com/Application-drop-up/Travellle/internal/usecase/note"
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
 	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
+	planmemberuc "github.com/Application-drop-up/Travellle/internal/usecase/planmember"
 	spotuc "github.com/Application-drop-up/Travellle/internal/usecase/spot"
 	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 	"github.com/go-chi/chi/v5"
@@ -38,6 +39,7 @@ func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *
 		notification.NewLogEmailSender(),
 	), isDev)
 	countryGuideHandler := handler.NewCountryGuideHandler(countryguideuc.New(persistence.NewCountryGuideRepository(db)))
+	planMemberHandler := handler.NewPlanMemberHandler(planmemberuc.New(persistence.NewPlanMemberRepository(db)))
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)
@@ -81,6 +83,10 @@ func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *
 
 		r.Get("/country-guides", countryGuideHandler.List)
 		r.Get("/country-guides/{code}", countryGuideHandler.GetByCode)
+
+		r.Post("/plans/{plan_id}/members", planMemberHandler.Add)
+		r.Get("/plans/{plan_id}/members", planMemberHandler.List)
+		r.Delete("/plans/{plan_id}/members/{user_id}", planMemberHandler.Remove)
 	})
 
 	return mux
