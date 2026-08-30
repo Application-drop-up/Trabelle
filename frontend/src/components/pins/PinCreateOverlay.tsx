@@ -30,6 +30,8 @@ export function PinCreateOverlay({ planId, spot, onCreated, onCancel }: Props) {
       longitude: spot.longitude,
       category,
       colour,
+      place_id: spot.placeId,
+      address: spot.address,
     });
     if (vm) onCreated(vm);
   };

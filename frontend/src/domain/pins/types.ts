@@ -32,6 +32,10 @@ export interface CreatePinInput {
   longitude: number;
   category: PinCategory;
   colour: string;
+  // Set when the Pin is created from a Spot search result, so the backend
+  // can cache that Spot for future searches.
+  place_id?: string;
+  address?: string;
 }
 
 export interface UpdatePinInput {
