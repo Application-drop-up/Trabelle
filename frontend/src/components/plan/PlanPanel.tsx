@@ -2,6 +2,7 @@
 
 import type { PlanViewModel } from "@/containers/PlanContainer";
 import type { useSpotSearchContainer, SpotViewModel } from "@/containers/SpotSearchContainer";
+import { CountryGuidePanel } from "@/components/countryGuides/CountryGuidePanel";
 import { SpotSearchBar } from "@/components/spots/SpotSearchBar";
 
 import { PinList } from "./PinList";
@@ -47,6 +48,9 @@ export function PlanPanel({
           onUpdateNote={onUpdateNote}
           onDeleteNote={onDeleteNote}
         />
+        <div className="mt-6 border-t border-zinc-200 pt-4">
+          <CountryGuidePanel />
+        </div>
       </div>
     </div>
   );

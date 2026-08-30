@@ -19,7 +19,7 @@ This app is designed to solve specific pain points for three different types of 
 * **Component-Based Architecture & High Reusability:** Essential for managing the complex, interactive UI required for a map-centric application. UI elements like custom spot cards, color-coded pins, and interactive note panels are built as isolated components and seamlessly reused across different views, significantly improving maintainability.
 * **Declarative UI with Virtual DOM:** Instead of imperatively manipulating the DOM (which is highly complex in map applications), React allows us to declare the UI state. The Virtual DOM ensures that only the modified parts of the map or notes are re-rendered, providing a highly performant and smooth user experience.
 * **Predictable One-Way Data Flow:** By enforcing a strict top-down data flow (Props), the state of the application remains predictable and easy to debug. This is crucial for tracing how spot data moves from the map interface to the detail panels, preventing hard-to-find bugs as the app grows.
-* **Rich Ecosystem:** Leverages mature libraries like `@react-google-maps/api` to integrate efficiently with Google Maps APIs, allowing focus on core product features rather than low-level map implementations.
+* **Rich Ecosystem:** Leverages mature libraries like `@tomtom-international/web-sdk-maps` to integrate efficiently with TomTom's mapping APIs, allowing focus on core product features rather than low-level map implementations.
 
 ### Backend: Go
 * **High Performance & Concurrency:** Ideal for a scalable API server that handles numerous concurrent requests, particularly for external API calls (like the TomTom Search API) and future real-time collaborative features.
