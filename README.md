@@ -41,7 +41,7 @@ This app is designed to solve specific pain points for three different types of 
 - [x] User authentication & registration
 - [x] Pre-travel essential information (Country-specific guides)
 - [x] Reusing spot information from other users
-- [ ] Collaborative plan editing
+- [x] Collaborative plan editing
 
 ### v3
 - [ ] Real-time update notifications
