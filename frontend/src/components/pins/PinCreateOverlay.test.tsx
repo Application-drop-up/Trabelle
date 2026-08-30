@@ -109,6 +109,8 @@ describe("PinCreateOverlay", () => {
           latitude: 35.6586,
           longitude: 139.7454,
           category: "sightseeing",
+          place_id: "spot-1",
+          address: "Tokyo",
         }),
       );
       expect(onCreated).toHaveBeenCalledWith(mockPinVM);
