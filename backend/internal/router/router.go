@@ -27,19 +27,22 @@ func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *
 
 	pinUseCase := pinuc.New(pinRepo, spotUseCase)
 	noteUseCase := noteuc.New(noteRepo)
-
-	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase)
-	pinHandler := handler.NewPinHandler(pinUseCase)
-	noteHandler := handler.NewNoteHandler(noteUseCase)
-	spotHandler := handler.NewSpotHandler(spotUseCase)
-	authHandler := handler.NewAuthHandler(useruc.New(
+	userUseCase := useruc.New(
 		persistence.NewUserRepository(db),
 		persistence.NewSessionRepository(db),
 		persistence.NewLoginOTPRepository(db),
 		notification.NewLogEmailSender(),
-	), isDev)
+	)
+
+	planMemberUseCase := planmemberuc.New(persistence.NewPlanMemberRepository(db))
+
+	planHandler := handler.NewPlanHandler(planuc.New(persistence.NewPlanRepository(db)), pinUseCase, noteUseCase, userUseCase, planMemberUseCase)
+	pinHandler := handler.NewPinHandler(pinUseCase)
+	noteHandler := handler.NewNoteHandler(noteUseCase)
+	spotHandler := handler.NewSpotHandler(spotUseCase)
+	authHandler := handler.NewAuthHandler(userUseCase, isDev)
 	countryGuideHandler := handler.NewCountryGuideHandler(countryguideuc.New(persistence.NewCountryGuideRepository(db)))
-	planMemberHandler := handler.NewPlanMemberHandler(planmemberuc.New(persistence.NewPlanMemberRepository(db)))
+	planMemberHandler := handler.NewPlanMemberHandler(planMemberUseCase)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Logger)

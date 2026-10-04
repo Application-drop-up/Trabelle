@@ -10,18 +10,44 @@ import (
 	noteuc "github.com/Application-drop-up/Travellle/internal/usecase/note"
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
 	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
+	planmemberuc "github.com/Application-drop-up/Travellle/internal/usecase/planmember"
+	useruc "github.com/Application-drop-up/Travellle/internal/usecase/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type PlanHandler struct {
-	planUseCase *planuc.UseCase
-	pinUseCase  *pinuc.UseCase
-	noteUseCase *noteuc.UseCase
+	planUseCase       *planuc.UseCase
+	pinUseCase        *pinuc.UseCase
+	noteUseCase       *noteuc.UseCase
+	userUseCase       *useruc.UseCase
+	planMemberUseCase *planmemberuc.UseCase
 }
 
-func NewPlanHandler(planUseCase *planuc.UseCase, pinUseCase *pinuc.UseCase, noteUseCase *noteuc.UseCase) *PlanHandler {
-	return &PlanHandler{planUseCase: planUseCase, pinUseCase: pinUseCase, noteUseCase: noteUseCase}
+func NewPlanHandler(planUseCase *planuc.UseCase, pinUseCase *pinuc.UseCase, noteUseCase *noteuc.UseCase, userUseCase *useruc.UseCase, planMemberUseCase *planmemberuc.UseCase) *PlanHandler {
+	return &PlanHandler{
+		planUseCase:       planUseCase,
+		pinUseCase:        pinUseCase,
+		noteUseCase:       noteUseCase,
+		userUseCase:       userUseCase,
+		planMemberUseCase: planMemberUseCase,
+	}
+}
+
+// currentUserID resolves the authenticated user from the session cookie, if
+// any. ok is false for any failure (no cookie, invalid/expired session) --
+// callers must treat that as "anonymous", not an error, since most Plan
+// endpoints work without authentication by design.
+func (planHandler *PlanHandler) currentUserID(req *http.Request) (uuid.UUID, bool) {
+	cookie, err := req.Cookie(sessionCookieName)
+	if err != nil {
+		return uuid.UUID{}, false
+	}
+	dto, err := planHandler.userUseCase.CurrentUser(req.Context(), cookie.Value)
+	if err != nil {
+		return uuid.UUID{}, false
+	}
+	return dto.ID, true
 }
 
 type createPlanRequest struct {
@@ -86,6 +112,13 @@ func (planHandler *PlanHandler) Create(rw http.ResponseWriter, req *http.Request
 	if err != nil {
 		writeError(rw, http.StatusInternalServerError, "internal server error")
 		return
+	}
+
+	// Best-effort: if the request is authenticated, add the creator as a
+	// PlanMember so the plan shows up in their /plans list. This must never
+	// fail Plan creation -- most callers are anonymous by design.
+	if userID, ok := planHandler.currentUserID(req); ok {
+		_, _ = planHandler.planMemberUseCase.AddMember(req.Context(), plan.ID, userID)
 	}
 
 	writeJSON(rw, http.StatusCreated, toPlanResponse(plan, []pinWithNotes{}))
