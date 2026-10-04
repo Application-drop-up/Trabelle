@@ -10,5 +10,6 @@ type Repository interface {
 	Create(ctx context.Context, plan *Plan) error
 	FindByShareToken(ctx context.Context, shareToken string) (*Plan, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Plan, error)
+	FindByMemberID(ctx context.Context, userID uuid.UUID) ([]*Plan, error)
 	UpdateVisibility(ctx context.Context, plan *Plan) error
 }

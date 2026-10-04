@@ -58,6 +58,33 @@ func (repo *PlanRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain
 	return plan, nil
 }
 
+func (repo *PlanRepository) FindByMemberID(ctx context.Context, userID uuid.UUID) ([]*domain.Plan, error) {
+	query := `
+		SELECT p.id, p.title, p.share_token, p.is_public, p.created_at, p.updated_at
+		FROM plans p
+		JOIN plan_members pm ON pm.plan_id = p.id
+		WHERE pm.user_id = $1
+		ORDER BY pm.created_at ASC`
+	rows, err := repo.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("find plans by member id: %w", err)
+	}
+	defer rows.Close()
+
+	var plans []*domain.Plan
+	for rows.Next() {
+		plan := &domain.Plan{}
+		if err := rows.Scan(&plan.ID, &plan.Title, &plan.ShareToken, &plan.IsPublic, &plan.CreatedAt, &plan.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan plan: %w", err)
+		}
+		plans = append(plans, plan)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("find plans by member id rows: %w", err)
+	}
+	return plans, nil
+}
+
 func (repo *PlanRepository) UpdateVisibility(ctx context.Context, plan *domain.Plan) error {
 	query := `
 		UPDATE plans SET is_public = $1, updated_at = NOW()
