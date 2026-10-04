@@ -157,7 +157,7 @@ describe("LoginView", () => {
       expect(mockOnSubmitCode).toHaveBeenCalledTimes(1);
     });
 
-    it("redirects to /profile when onSubmitCode succeeds", async () => {
+    it("redirects to /plans when onSubmitCode succeeds", async () => {
       mockOnSubmitCode.mockResolvedValue(true);
       mockUseLoginContainer.mockReturnValue(
         credentialsState({ step: "otp", email: "taro@example.com", code: "123456" }),
@@ -167,7 +167,7 @@ describe("LoginView", () => {
       fireEvent.click(screen.getByRole("button", { name: "ログイン" }));
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith("/profile");
+        expect(mockPush).toHaveBeenCalledWith("/plans");
       });
     });
 
