@@ -30,4 +30,9 @@ export const errorMessages = {
     list: "Failed to fetch country guides",
     get: "Failed to fetch country guide",
   },
+  planMembers: {
+    list: "Failed to fetch plan members",
+    add: "Failed to add plan member",
+    remove: "Failed to remove plan member",
+  },
 } as const;

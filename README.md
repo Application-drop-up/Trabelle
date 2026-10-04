@@ -39,7 +39,7 @@ This app is designed to solve specific pain points for three different types of 
 
 ### v2
 - [x] User authentication & registration
-- [ ] Pre-travel essential information (Country-specific guides)
+- [x] Pre-travel essential information (Country-specific guides)
 - [x] Reusing spot information from other users
 - [ ] Collaborative plan editing
 
