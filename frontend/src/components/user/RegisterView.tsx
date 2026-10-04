@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useRegisterContainer } from "@/containers/RegisterContainer";
 
 export function RegisterView() {
+  const router = useRouter();
   const {
     email,
     password,
@@ -17,7 +20,8 @@ export function RegisterView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit();
+    const user = await onSubmit();
+    if (user) router.push("/login");
   };
 
   return (
