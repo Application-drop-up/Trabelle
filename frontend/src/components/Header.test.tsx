@@ -49,6 +49,24 @@ describe("Header", () => {
     expect(screen.getByRole("button", { name: "ログアウト" })).toBeInTheDocument();
   });
 
+  it("shows navigation links to plans and profile when logged in", () => {
+    mockUseUserContext.mockReturnValue({ user: mockUser });
+
+    render(<Header />);
+
+    expect(screen.getByRole("link", { name: "マイプラン" })).toHaveAttribute("href", "/plans");
+    expect(screen.getByRole("link", { name: "プロフィール" })).toHaveAttribute("href", "/profile");
+  });
+
+  it("does not show navigation links when logged out", () => {
+    mockUseUserContext.mockReturnValue({ user: null });
+
+    render(<Header />);
+
+    expect(screen.queryByRole("link", { name: "マイプラン" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "プロフィール" })).not.toBeInTheDocument();
+  });
+
   it("redirects to /login when logout succeeds", async () => {
     mockUseUserContext.mockReturnValue({ user: mockUser });
     mockOnLogout.mockResolvedValue(true);
