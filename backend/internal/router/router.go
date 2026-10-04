@@ -78,6 +78,7 @@ func New(db *sql.DB, tomTomAPIKey string, allowedOrigins []string, isDev bool) *
 		r.Post("/login/verify", authHandler.LoginVerify)
 		r.Post("/logout", authHandler.Logout)
 		r.Get("/user/me", authHandler.Me)
+		r.Get("/user/{id}/plans", planHandler.ListForUser)
 
 		r.Post("/plans/{share_token}/publish", planHandler.Publish)
 

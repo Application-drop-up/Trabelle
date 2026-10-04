@@ -13,6 +13,7 @@ export const errorMessages = {
   plan: {
     create: "Failed to create plan",
     fetch: "Failed to fetch plan",
+    listForUser: "Failed to fetch your plans",
   },
   spots: {
     search: "Failed to search spots",

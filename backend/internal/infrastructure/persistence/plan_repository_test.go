@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 
 	domain "github.com/Application-drop-up/Travellle/internal/domain/plan"
+	planmemberdomain "github.com/Application-drop-up/Travellle/internal/domain/planmember"
+	userdomain "github.com/Application-drop-up/Travellle/internal/domain/user"
 	"github.com/Application-drop-up/Travellle/internal/infrastructure/persistence"
 )
 
@@ -117,6 +119,70 @@ func TestPlanRepository_FindByID(t *testing.T) {
 		_, err := repo.FindByID(context.Background(), uuid.New())
 		if !errors.Is(err, domain.ErrNotFound) {
 			t.Errorf("FindByID() error = %v, want %v", err, domain.ErrNotFound)
+		}
+	})
+}
+
+func TestPlanRepository_FindByMemberID(t *testing.T) {
+	t.Parallel()
+
+	conn := newTestDB(t)
+	planRepo := persistence.NewPlanRepository(conn)
+	memberRepo := persistence.NewPlanMemberRepository(conn)
+	userRepo := persistence.NewUserRepository(conn)
+
+	t.Run("returns plans the user is a member of", func(t *testing.T) {
+		t.Parallel()
+
+		user := &userdomain.User{
+			ID:           uuid.New(),
+			Email:        uuid.New().String() + "@example.com",
+			PasswordHash: "hash",
+			Name:         "Member Test User",
+		}
+		if err := userRepo.Create(context.Background(), user); err != nil {
+			t.Fatalf("failed to create prerequisite user: %v", err)
+		}
+		t.Cleanup(func() { _, _ = conn.Exec("DELETE FROM users WHERE id = $1", user.ID) })
+
+		memberPlan := newTestPlan(t)
+		t.Cleanup(func() { _, _ = conn.Exec("DELETE FROM plans WHERE id = $1", memberPlan.ID) })
+		if err := planRepo.Create(context.Background(), memberPlan); err != nil {
+			t.Fatalf("Create() unexpected error: %v", err)
+		}
+
+		nonMemberPlan := newTestPlan(t)
+		t.Cleanup(func() { _, _ = conn.Exec("DELETE FROM plans WHERE id = $1", nonMemberPlan.ID) })
+		if err := planRepo.Create(context.Background(), nonMemberPlan); err != nil {
+			t.Fatalf("Create() unexpected error: %v", err)
+		}
+
+		member := &planmemberdomain.PlanMember{ID: uuid.New(), PlanID: memberPlan.ID, UserID: user.ID}
+		if err := memberRepo.Create(context.Background(), member); err != nil {
+			t.Fatalf("failed to seed plan member: %v", err)
+		}
+
+		got, err := planRepo.FindByMemberID(context.Background(), user.ID)
+		if err != nil {
+			t.Fatalf("FindByMemberID() unexpected error: %v", err)
+		}
+		if len(got) != 1 {
+			t.Fatalf("FindByMemberID() returned %d plans, want 1", len(got))
+		}
+		if got[0].ID != memberPlan.ID {
+			t.Errorf("FindByMemberID()[0].ID = %v, want %v", got[0].ID, memberPlan.ID)
+		}
+	})
+
+	t.Run("returns an empty slice for a user with no memberships", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := planRepo.FindByMemberID(context.Background(), uuid.New())
+		if err != nil {
+			t.Fatalf("FindByMemberID() unexpected error: %v", err)
+		}
+		if len(got) != 0 {
+			t.Errorf("FindByMemberID() returned %d plans, want 0", len(got))
 		}
 	})
 }

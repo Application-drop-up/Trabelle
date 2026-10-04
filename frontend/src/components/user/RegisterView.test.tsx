@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import type { User } from "@/domain/user/types";
 import { RegisterView } from "./RegisterView";
@@ -8,9 +8,14 @@ const mockOnChangeEmail = jest.fn();
 const mockOnChangePassword = jest.fn();
 const mockOnChangeName = jest.fn();
 const mockUseRegisterContainer = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock("@/containers/RegisterContainer", () => ({
   useRegisterContainer: (...args: unknown[]) => mockUseRegisterContainer(...args),
+}));
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
 }));
 
 const mockUser: User = {
@@ -104,6 +109,51 @@ describe("RegisterView", () => {
     fireEvent.click(screen.getByRole("button", { name: "登録する" }));
 
     expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("redirects to /login when registration succeeds", async () => {
+    mockOnSubmit.mockResolvedValue(mockUser);
+    mockUseRegisterContainer.mockReturnValue({
+      email: "taro@example.com",
+      password: "password123",
+      name: "Taro",
+      loading: false,
+      error: null,
+      onChangeEmail: mockOnChangeEmail,
+      onChangePassword: mockOnChangePassword,
+      onChangeName: mockOnChangeName,
+      onSubmit: mockOnSubmit,
+    });
+
+    render(<RegisterView />);
+    fireEvent.click(screen.getByRole("button", { name: "登録する" }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/login");
+    });
+  });
+
+  it("does not redirect when registration fails", async () => {
+    mockOnSubmit.mockResolvedValue(null);
+    mockUseRegisterContainer.mockReturnValue({
+      email: "taro@example.com",
+      password: "password123",
+      name: "Taro",
+      loading: false,
+      error: "email already taken",
+      onChangeEmail: mockOnChangeEmail,
+      onChangePassword: mockOnChangePassword,
+      onChangeName: mockOnChangeName,
+      onSubmit: mockOnSubmit,
+    });
+
+    render(<RegisterView />);
+    fireEvent.click(screen.getByRole("button", { name: "登録する" }));
+
+    await waitFor(() => {
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("shows loading state on the submit button", () => {

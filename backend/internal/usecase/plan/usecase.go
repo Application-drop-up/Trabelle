@@ -40,6 +40,10 @@ func (useCase *UseCase) GetPlanByShareToken(ctx context.Context, token string) (
 	return useCase.repo.FindByShareToken(ctx, token)
 }
 
+func (useCase *UseCase) ListPlansForUser(ctx context.Context, userID uuid.UUID) ([]*domain.Plan, error) {
+	return useCase.repo.FindByMemberID(ctx, userID)
+}
+
 // PublishPlan makes a Plan viewable without its ShareToken. The caller must
 // already hold the ShareToken to publish it -- publishing is an action
 // taken from within the token-gated editing flow, not a separate

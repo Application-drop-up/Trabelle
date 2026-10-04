@@ -28,7 +28,7 @@ export function LoginView() {
       await onSubmitCredentials();
     } else {
       const success = await onSubmitCode();
-      if (success) router.push("/profile");
+      if (success) router.push("/plans");
     }
   };
 

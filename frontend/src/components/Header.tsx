@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@mui/material";
@@ -21,12 +22,18 @@ export function Header() {
     <header className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
       <span className="font-semibold">Trabelle</span>
       {user && (
-        <div className="flex items-center gap-3 text-sm">
+        <nav className="flex items-center gap-4 text-sm">
+          <Link href="/plans" className="hover:underline">
+            マイプラン
+          </Link>
+          <Link href="/profile" className="hover:underline">
+            プロフィール
+          </Link>
           <span>{user.name} さん</span>
           <Button size="small" variant="outlined" onClick={handleLogout}>
             ログアウト
           </Button>
-        </div>
+        </nav>
       )}
     </header>
   );
