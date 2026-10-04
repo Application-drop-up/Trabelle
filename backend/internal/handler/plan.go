@@ -11,6 +11,7 @@ import (
 	pinuc "github.com/Application-drop-up/Travellle/internal/usecase/pin"
 	planuc "github.com/Application-drop-up/Travellle/internal/usecase/plan"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type PlanHandler struct {
@@ -49,6 +50,26 @@ func toPlanResponse(plan *domain.Plan, pins []pinWithNotes) planResponse {
 		Title:      plan.Title,
 		IsPublic:   plan.IsPublic,
 		Pins:       pins,
+		CreatedAt:  plan.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:  plan.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+type planSummaryResponse struct {
+	ID         string `json:"id"`
+	ShareToken string `json:"share_token"`
+	Title      string `json:"title"`
+	IsPublic   bool   `json:"is_public"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+func toPlanSummaryResponse(plan *domain.Plan) planSummaryResponse {
+	return planSummaryResponse{
+		ID:         plan.ID.String(),
+		ShareToken: plan.ShareToken,
+		Title:      plan.Title,
+		IsPublic:   plan.IsPublic,
 		CreatedAt:  plan.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt:  plan.UpdatedAt.UTC().Format(time.RFC3339),
 	}
@@ -108,6 +129,26 @@ func (planHandler *PlanHandler) GetByShareToken(rw http.ResponseWriter, req *htt
 	}
 
 	writeJSON(rw, http.StatusOK, toPlanResponse(plan, pins))
+}
+
+func (planHandler *PlanHandler) ListForUser(rw http.ResponseWriter, req *http.Request) {
+	userID, err := uuid.Parse(chi.URLParam(req, "id"))
+	if err != nil {
+		writeError(rw, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	plans, err := planHandler.planUseCase.ListPlansForUser(req.Context(), userID)
+	if err != nil {
+		writeError(rw, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	resp := make([]planSummaryResponse, 0, len(plans))
+	for _, plan := range plans {
+		resp = append(resp, toPlanSummaryResponse(plan))
+	}
+	writeJSON(rw, http.StatusOK, resp)
 }
 
 func (planHandler *PlanHandler) Publish(rw http.ResponseWriter, req *http.Request) {

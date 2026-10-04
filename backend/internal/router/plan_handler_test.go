@@ -174,3 +174,82 @@ func TestPlanHandler_Publish(t *testing.T) {
 		}
 	})
 }
+
+func TestPlanHandler_ListForUser(t *testing.T) {
+	t.Parallel()
+
+	db := testutil.NewTestDB(t)
+	r := router.New(db, "test-api-key", []string{"http://localhost:3000"}, false)
+
+	t.Run("returns only the plans the user is a member of", func(t *testing.T) {
+		t.Parallel()
+
+		userID := createTestUserForMember(t, r)
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM users WHERE id = $1", userID) })
+
+		memberPlanID := createTestPlan(t, r, "Member Plan")
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM plans WHERE id = $1", memberPlanID) })
+
+		nonMemberPlanID := createTestPlan(t, r, "Non-Member Plan")
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM plans WHERE id = $1", nonMemberPlanID) })
+
+		addResp := addTestMember(t, r, memberPlanID, userID)
+		if addResp.Code != http.StatusCreated {
+			t.Fatalf("add member status = %d, want %d, body: %s", addResp.Code, http.StatusCreated, addResp.Body.String())
+		}
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/user/"+userID+"/plans", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d, body: %s", w.Code, http.StatusOK, w.Body.String())
+		}
+
+		var plans []planResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &plans); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if len(plans) != 1 {
+			t.Fatalf("got %d plans, want 1", len(plans))
+		}
+		if plans[0].ID != memberPlanID {
+			t.Errorf("ID = %q, want %q", plans[0].ID, memberPlanID)
+		}
+	})
+
+	t.Run("returns an empty list for a user with no memberships", func(t *testing.T) {
+		t.Parallel()
+
+		userID := createTestUserForMember(t, r)
+		t.Cleanup(func() { _, _ = db.Exec("DELETE FROM users WHERE id = $1", userID) })
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/user/"+userID+"/plans", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d, body: %s", w.Code, http.StatusOK, w.Body.String())
+		}
+
+		var plans []planResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &plans); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if len(plans) != 0 {
+			t.Errorf("got %d plans, want 0", len(plans))
+		}
+	})
+
+	t.Run("rejects an invalid user id", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/user/not-a-uuid/plans", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+		}
+	})
+}
