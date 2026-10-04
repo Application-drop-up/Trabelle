@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 
-import type { Plan } from "@/domain/plans/types";
+import type { Plan, PlanSummary } from "@/domain/plans/types";
 import { usePlan } from "./usePlan";
 
 const mockPlan: Plan = {
@@ -8,6 +8,15 @@ const mockPlan: Plan = {
   share_token: "abc123",
   title: "Tokyo Trip",
   pins: [],
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-02T00:00:00Z",
+};
+
+const mockPlanSummary: PlanSummary = {
+  id: "plan-1",
+  share_token: "abc123",
+  title: "Tokyo Trip",
+  is_public: false,
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-02T00:00:00Z",
 };
@@ -140,6 +149,51 @@ describe("usePlan", () => {
         expect.stringContaining("/plans/abc123"),
         expect.any(Object),
       );
+    });
+  });
+
+  describe("listPlansForUser", () => {
+    it("returns plans and updates state on success", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [mockPlanSummary],
+      } as Response);
+
+      const { result } = renderHook(() => usePlan());
+
+      let returned: PlanSummary[] = [];
+      await act(async () => {
+        returned = await result.current.listPlansForUser("user-1");
+      });
+
+      expect(returned).toEqual([mockPlanSummary]);
+      expect(result.current.plans).toEqual([mockPlanSummary]);
+      expect(result.current.error).toBeNull();
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/v1/user/user-1/plans"),
+        expect.any(Object),
+      );
+    });
+
+    it("sets error state on failure", async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        json: async () => ({ message: "internal server error" }),
+      } as Response);
+
+      const { result } = renderHook(() => usePlan());
+
+      let returned: PlanSummary[] = [mockPlanSummary];
+      await act(async () => {
+        returned = await result.current.listPlansForUser("user-1");
+      });
+
+      expect(returned).toHaveLength(0);
+      expect(result.current.plans).toHaveLength(0);
+      expect(result.current.error).toBe("internal server error");
     });
   });
 });
