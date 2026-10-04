@@ -34,7 +34,7 @@ export default function RootLayout({
           <MuiThemeProvider>
             <UserProvider>
               <Header />
-              {process.env.NODE_ENV === "development" ? (
+              {process.env.NEXT_PUBLIC_API_MOCKING === "enabled" ? (
                 <MSWProvider>{children}</MSWProvider>
               ) : (
                 children
